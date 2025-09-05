@@ -127,6 +127,12 @@ const store: StoreOptions<WidgetState> = {
         name: "route-management",
         group: "route",
         disableOther: ["route-planning"]
+      },
+      {
+        // 空域申请
+        component: markRaw(defineAsyncComponent(() => import("@mars/widgets/airspace-application/index.vue"))),
+        name: "airspace-application",
+        group: "airspace"
       }
     ],
     openAtStart: ["toolbar", "query-poi"]

@@ -3,39 +3,44 @@
     <div class="top-bar-content">
       <!-- 左侧菜单 -->
       <div class="menu-section left-menu">
-        <!-- 系统管理下拉菜单 -->
-        <div class="custom-dropdown" @mouseenter="showDropdown = true" @mouseleave="showDropdown = false">
-          <div class="menu-item" :class="{ active: isSystemActive }">
+        <!-- 设备清单下拉菜单 -->
+        <div class="custom-dropdown" @mouseenter="showDeviceDropdown = true" @mouseleave="showDeviceDropdown = false">
+          <div class="menu-item" :class="{ active: isDeviceActive }">
             <mars-icon icon="system" width="25"></mars-icon>
-            <span>系统管理</span>
+            <span>设备清单</span>
           </div>
-          <div v-show="showDropdown" class="custom-dropdown-menu">
-            <div class="sub-menu-item" @click="handleSubMenuClick('airspace')">
-              <mars-icon icon="engineering-brand" width="20"></mars-icon>
-              <span>空域管理</span>
+          <div v-show="showDeviceDropdown" class="custom-dropdown-menu">
+            <div class="sub-menu-item" @click="handleSubMenuClick('personal-device')">
+              <mars-icon icon="user" width="20"></mars-icon>
+              <span>个人设备</span>
             </div>
-            <div class="sub-menu-item" @click="handleSubMenuClick('aircraft')">
+            <div class="sub-menu-item" @click="handleSubMenuClick('public-device')">
               <mars-icon icon="drone-one" width="20"></mars-icon>
-              <span>机型管理</span>
+              <span>公有设备</span>
             </div>
-            <div class="sub-menu-item" @click="handleSubMenuClick('hangar')">
-              <mars-icon icon="dropbox" width="20"></mars-icon>
-              <span>机巢管理</span>
-            </div>
-            <div class="sub-menu-item" @click="handleSubMenuClick('route')">
+          </div>
+        </div>
+
+        <!-- 航线规划下拉菜单 -->
+        <div class="custom-dropdown" @mouseenter="showRouteDropdown = true" @mouseleave="showRouteDropdown = false">
+          <div class="menu-item" :class="{ active: isRouteActive }">
+            <mars-icon icon="switch-track" width="25"></mars-icon>
+            <span>航线规划</span>
+          </div>
+          <div v-show="showRouteDropdown" class="custom-dropdown-menu">
+            <div class="sub-menu-item" @click="handleSubMenuClick('route-management')">
               <mars-icon icon="switch-track" width="20"></mars-icon>
               <span>航线管理</span>
             </div>
+            <div class="sub-menu-item" @click="handleSubMenuClick('manual-route')">
+              <mars-icon icon="clothes-gloves" width="20"></mars-icon>
+              <span>手动航线规划</span>
+            </div>
+            <div class="sub-menu-item" @click="handleSubMenuClick('auto-route')">
+              <mars-icon icon="assembly-line" width="20"></mars-icon>
+              <span>自动航线规划</span>
+            </div>
           </div>
-        </div>
-        
-        <div class="menu-item" @click="handleMenuClick('simulation')">
-          <mars-icon icon="clothes-gloves" width="25"></mars-icon>
-          <span>手动航线规划</span>
-        </div>
-        <div class="menu-item" :class="{ active: isManageLayersActive }" @click="handleMenuClick('manage-layers')">
-          <mars-icon icon="assembly-line" width="25"></mars-icon>
-          <span>自动航线规划</span>
         </div>
       </div>
       
@@ -44,17 +49,22 @@
       
       <!-- 右侧菜单 -->
       <div class="menu-section right-menu">
-        <div class="menu-item" @click="handleMenuClick('task')">
-          <mars-icon icon="plan" width="25"></mars-icon>
-          <span>飞行任务</span>
+        <!-- 空域申请 -->
+        <div class="menu-item" @click="handleMenuClick('airspace-application')">
+          <mars-icon icon="file-text" width="25"></mars-icon>
+          <span>空域申请</span>
         </div>
-        <div class="menu-item" @click="handleMenuClick('monitor')">
-          <mars-icon icon="smart-optimization" width="25"></mars-icon>
-          <span>智能识别</span>
+
+        <!-- 空域计算 -->
+        <div class="menu-item" @click="handleMenuClick('airspace-calculation')">
+          <mars-icon icon="calculator" width="25"></mars-icon>
+          <span>空域计算</span>
         </div>
-        <div class="menu-item" @click="handleMenuClick('settings')">
-          <mars-icon icon="caution" width="25"></mars-icon>
-          <span>事件预警</span>
+
+        <!-- 飞行报告 -->
+        <div class="menu-item" @click="handleMenuClick('flight-report')">
+          <mars-icon icon="file-text-one" width="25"></mars-icon>
+          <span>飞行报告</span>
         </div>
       </div>
     </div>
@@ -63,6 +73,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
+import { message } from "ant-design-vue"
 import { useWidget } from "@mars/common/store/widget"
 
 // 顶部栏组件
@@ -73,16 +84,20 @@ const menuStates = ref({
   menu1Active: false
 })
 
-// 控制系统管理下拉菜单显示
-const showDropdown = ref(false)
+// 控制下拉菜单显示
+const showDeviceDropdown = ref(false)
+const showRouteDropdown = ref(false)
 
 // 计算属性，实时获取widget状态
-const isManageLayersActive = computed(() => isActivate("manage-layers"))
+// 设备清单菜单激活状态（如果有任何子项激活则高亮）
+const isDeviceActive = computed(() => {
+  return isActivate("aircraft-management")
+  // 后续可添加个人设备的widget检测
+})
 
-// 系统管理菜单激活状态（如果有任何子项激活则高亮）
-const isSystemActive = computed(() => {
-  // 可以根据需要添加系统管理相关的widget检测
-  return false // 暂时设为false，后续可根据子项widget状态调整
+// 航线规划菜单激活状态（如果有任何子项激活则高亮）
+const isRouteActive = computed(() => {
+  return isActivate("route-management") || isActivate("route-planning")
 })
 
 // 菜单点击处理函数
@@ -90,28 +105,19 @@ const handleMenuClick = (menuType: string) => {
   console.log("点击菜单:", menuType)
   
   switch (menuType) {
-    case "manage-layers":
-      // 检查manage-layers widget是否激活
-      if (isActivate("manage-layers")) {
-        // 如果已激活，则关闭
-        disable("manage-layers")
-      } else {
-        // 如果未激活，则激活
-        activate("manage-layers")
-      }
+    case "airspace-application":
+      console.log("点击空域申请")
+      activate({ name: "airspace-application" })
       break
-    case "simulation":
-      // 手动航线规划
-      console.log("激活手动航线规划")
-      activate({ name: "route-planning" })
+    case "airspace-calculation":
+      console.log("点击空域计算")
+      // TODO: 后续实现空域计算功能
+      message.info("空域计算功能开发中，敬请期待")
       break
-    case "route":
-      break
-    case "task":
-      break
-    case "monitor":
-      break
-    case "settings":
+    case "flight-report":
+      console.log("点击飞行报告")
+      // TODO: 后续实现飞行报告功能
+      message.info("飞行报告功能开发中，敬请期待")
       break
     default:
       console.log("未知菜单类型:", menuType)
@@ -122,28 +128,35 @@ const handleMenuClick = (menuType: string) => {
 const handleSubMenuClick = (subMenuType: string) => {
   console.log("点击子菜单:", subMenuType)
   
-  // 点击子菜单项后关闭下拉菜单
-  showDropdown.value = false
+  // 点击子菜单项后关闭相关下拉菜单
+  showDeviceDropdown.value = false
+  showRouteDropdown.value = false
   
   switch (subMenuType) {
-    case "airspace":
-      console.log("点击空域管理")
-      // TODO: 后续实现空域管理功能
-      break
-    case "aircraft":
-      console.log("点击机型管理")
-      // 激活机型管理widget
+    // 设备清单子菜单
+    case "personal-device":
+      console.log("点击个人设备")
       activate({ name: "aircraft-management" })
       break
-    case "hangar":
-      console.log("点击机巢管理")
-      // TODO: 后续实现机巢管理功能
+    case "public-device":
+      console.log("点击公有设备")
+      activate({ name: "aircraft-management" })
       break
-    case "route":
+    
+    // 航线规划子菜单
+    case "route-management":
       console.log("点击航线管理")
-      // 激活航线管理widget
       activate({ name: "route-management" })
       break
+    case "manual-route":
+      console.log("点击手动航线规划")
+      activate({ name: "route-planning" })
+      break
+    case "auto-route":
+      console.log("点击自动航线规划")
+      message.info("自动航线规划功能开发中，敬请期待")
+      break
+    
     default:
       console.log("未知子菜单类型:", subMenuType)
   }
@@ -190,15 +203,13 @@ const handleSubMenuClick = (subMenuType: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px;
+  padding: 0 5px;
 }
 
 .title {
   flex: 0 0 auto;
   min-width: 400px;
   font-size: 65px;
-  // font-weight: bold;
-  // font-style: italic;
   background: linear-gradient(to bottom, #ffffff 0%, #6E99BE 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -208,28 +219,31 @@ const handleSubMenuClick = (subMenuType: string) => {
   text-align: center;
   position: relative;
   z-index: 1;
-  // transform: translateY(-5px); // 文字位置偏移
   /* 添加文字轮廓和阴影增强可读性 */
   filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   /* 文字描边效果 */
   -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.3);
 }
 
-/* 菜单区域样式 */
+/* 菜单区域样式 - 确保左右两侧均衡 */
 .menu-section {
   display: flex;
   align-items: center;
-  flex: 1;
+  flex: 1 1 0; /* 确保两侧占用相同的基础空间 */
   padding: 0 10px;
-  gap: 10px;
+  min-width: 0; /* 防止flex项目溢出 */
 }
 
 .left-menu {
   justify-content: flex-start;
+  gap: 15px; /* 减少菜单之间间距 */
+  padding-right: 25px; /* 增加与标题的距离 */
 }
 
 .right-menu {
   justify-content: flex-end;
+  gap: 20px; /* 调整间距保持平衡 */
+  padding-left: 25px; /* 与左侧对称 */
 }
 
 /* 菜单项样式 */
@@ -241,7 +255,6 @@ const handleSubMenuClick = (subMenuType: string) => {
   background-repeat: no-repeat;
   padding: 8px 15px;
   min-width: 140px;
-  flex: 1;
   height: 45px;
   display: flex;
   align-items: center;
@@ -249,6 +262,21 @@ const handleSubMenuClick = (subMenuType: string) => {
   gap: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+/* 左侧菜单项 - 增大宽度 */
+.left-menu .menu-item,
+.left-menu .custom-dropdown {
+  min-width: 320px;
+  padding: 8px 28px;
+  flex: 1;
+}
+
+/* 右侧菜单项 - 与左侧平衡 */
+.right-menu .menu-item {
+  min-width: 180px;
+  padding: 8px 18px;
+  flex: 1;
 }
 
 .menu-item > * {
@@ -260,6 +288,7 @@ const handleSubMenuClick = (subMenuType: string) => {
   transform: scale(1.05);
   filter: brightness(1.2);
 }
+
 
 .menu-item.active span {
   color: #00ffff;
@@ -368,6 +397,25 @@ const handleSubMenuClick = (subMenuType: string) => {
     gap: 6px;
   }
   
+  .left-menu .menu-item,
+  .left-menu .custom-dropdown {
+    min-width: 230px;
+  }
+  
+  .left-menu {
+    gap: 12px;
+    padding-right: 20px;
+  }
+  
+  .right-menu .menu-item {
+    min-width: 150px;
+  }
+  
+  .right-menu {
+    gap: 15px;
+    padding-left: 20px;
+  }
+  
   .menu-item .mars-icon {
     width: 20px;
   }
@@ -410,7 +458,11 @@ const handleSubMenuClick = (subMenuType: string) => {
   
   .menu-section {
     gap: 5px;
-    padding: 0 5px;
+    padding: 0 8px;
+  }
+  
+  .top-bar-content {
+    padding: 0 15px;
   }
   
   .menu-item {
@@ -418,6 +470,28 @@ const handleSubMenuClick = (subMenuType: string) => {
     padding: 4px 8px;
     height: 35px;
     gap: 4px;
+  }
+  
+  .left-menu .menu-item,
+  .left-menu .custom-dropdown {
+    min-width: 180px;
+  }
+  
+  .right-menu .menu-item {
+    min-width: 120px;
+  }
+  
+  .right-menu {
+    gap: 12px;
+  }
+  
+  .left-menu {
+    gap: 10px;
+    padding-right: 15px;
+  }
+  
+  .right-menu {
+    padding-left: 15px;
   }
   
   .menu-item .mars-icon {

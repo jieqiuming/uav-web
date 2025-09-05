@@ -9,7 +9,7 @@ import type {
   AircraftQueryParams,
   PageResult,
   ApiResponse 
-} from '@/types/aircraft'
+} from "../types/aircraft"
 
 // 模拟数据 - 后续替换为真实API调用
 const mockAircraftModels: AircraftModel[] = [
