@@ -44,7 +44,10 @@
   },
   "control": {
     "cubeView": {
-      "style": { "top": "85px", "right": "10px" },
+      "style": {
+        "top": "85px",
+        "right": "10px"
+      },
       "enabled": true
     },
     "toolbar": {
@@ -196,8 +199,15 @@
     {
       "pid": 70,
       "type": "3dtiles",
-      "name": "OSGB_2_3DTiles",
-      "url": "http://10.101.240.60/uav-web/data/OSGB_2_3DTiles/tileset.json",
+      "name": "赤壁全域三维模型",
+      "url": "http://10.101.240.60/uav-web/data/chibi-3dtiles/tileset.json",
+      "center": {
+        "lat": 29.714195,
+        "lng": 113.876201,
+        "alt": 786.7,
+        "heading": 38.8,
+        "pitch": -32.6
+      },
       "maximumScreenSpaceError": 32,
       "maximumMemoryUsage": 4096,
       "progressiveResolutionHeightFraction": 0.5,
@@ -286,7 +296,13 @@
       "icon": "img/basemaps/esriWorldImagery.png",
       "type": "xyz",
       "url": "http://10.101.240.60/uav-web/data/DOM/{z}/{x}/{y}.png",
-      "center": {"lat":29.512184,"lng":113.861265,"alt":30254.8,"heading":11.5,"pitch":-44.9},
+      "center": {
+        "lat": 29.512184,
+        "lng": 113.861265,
+        "alt": 30254.8,
+        "heading": 11.5,
+        "pitch": -44.9
+      },
       "enablePickFeatures": false,
       "show": false,
       "flyTo": false
