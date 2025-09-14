@@ -50,19 +50,19 @@
       <!-- 右侧菜单 -->
       <div class="menu-section right-menu">
         <!-- 空域申请 -->
-        <div class="menu-item" @click="handleMenuClick('airspace-application')">
+        <div class="menu-item" :class="{ active: isAirspaceApplicationActive }" @click="handleMenuClick('airspace-application')">
           <mars-icon icon="file-text" width="25"></mars-icon>
           <span>空域申请</span>
         </div>
 
         <!-- 空域计算 -->
-        <div class="menu-item" @click="handleMenuClick('airspace-calculation')">
+        <div class="menu-item" :class="{ active: isAirspaceComputationActive }" @click="handleMenuClick('airspace-calculation')">
           <mars-icon icon="calculator" width="25"></mars-icon>
           <span>空域计算</span>
         </div>
 
         <!-- 飞行报告 -->
-        <div class="menu-item" @click="handleMenuClick('flight-report')">
+        <div class="menu-item" :class="{ active: isFlightReportActive }" @click="handleMenuClick('flight-report')">
           <mars-icon icon="file-text-one" width="25"></mars-icon>
           <span>飞行报告</span>
         </div>
@@ -100,6 +100,21 @@ const isRouteActive = computed(() => {
   return isActivate("route-management") || isActivate("route-planning")
 })
 
+// 空域申请菜单激活状态
+const isAirspaceApplicationActive = computed(() => {
+  return isActivate("airspace-application")
+})
+
+// 空域计算菜单激活状态
+const isAirspaceComputationActive = computed(() => {
+  return isActivate("airspace-computation")
+})
+
+// 飞行报告菜单激活状态
+const isFlightReportActive = computed(() => {
+  return isActivate("flight-report")
+})
+
 // 菜单点击处理函数
 const handleMenuClick = (menuType: string) => {
   console.log("点击菜单:", menuType)
@@ -111,13 +126,11 @@ const handleMenuClick = (menuType: string) => {
       break
     case "airspace-calculation":
       console.log("点击空域计算")
-      // TODO: 后续实现空域计算功能
-      message.info("空域计算功能开发中，敬请期待")
+      activate({ name: "airspace-computation" })
       break
     case "flight-report":
       console.log("点击飞行报告")
-      // TODO: 后续实现飞行报告功能
-      message.info("飞行报告功能开发中，敬请期待")
+      activate({ name: "flight-report" })
       break
     default:
       console.log("未知菜单类型:", menuType)
@@ -154,7 +167,7 @@ const handleSubMenuClick = (subMenuType: string) => {
       break
     case "auto-route":
       console.log("点击自动航线规划")
-      message.info("自动航线规划功能开发中，敬请期待")
+      activate({ name: "auto-route-planning" })
       break
     
     default:

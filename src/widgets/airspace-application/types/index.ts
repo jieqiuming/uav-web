@@ -37,6 +37,7 @@ export interface AirspaceTask {
   startTime: string
   routeId: string
   routeName?: string
+  algorithm: string
   status: TaskStatus
   description?: string
   createdAt: string
@@ -50,6 +51,7 @@ export interface AirspaceTaskForm {
   name: string
   startTime: any // dayjs对象或null
   routeId: string
+  algorithm: string
   description?: string
 }
 

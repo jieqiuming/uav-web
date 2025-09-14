@@ -30,6 +30,9 @@
           rowKey="id"
         >
           <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'algorithm'">
+              <span>{{ getAlgorithmText(record.algorithm) }}</span>
+            </template>
             <template v-if="column.key === 'status'">
               <a-tag :color="getStatusColor(record.status)">
                 {{ getStatusText(record.status) }}
@@ -62,6 +65,19 @@
               <a-select-option value="route3">应急响应航线</a-select-option>
             </a-select>
           </a-form-item>
+          <a-form-item label="执行算法">
+            <a-select v-model:value="formData.algorithm" placeholder="请选择执行算法">
+              <a-select-option value="drainage_cover_detection">高速排水沟盖板缺失检测算法</a-select-option>
+              <a-select-option value="isolation_fence_damage_detection">高速隔离栏破损检测算法</a-select-option>
+              <a-select-option value="urban_garbage_detection">城市垃圾堆检测算法</a-select-option>
+              <a-select-option value="safety_helmet_recognition">安全帽识别算法</a-select-option>
+              <a-select-option value="engineering_vehicle_detection">工程车辆检测算法</a-select-option>
+              <a-select-option value="road_crack_detection">道路裂纹检测算法</a-select-option>
+              <a-select-option value="fire_smoke_detection">烟火检测算法</a-select-option>
+              <a-select-option value="general_person_vehicle_detection">通用人车检测算法</a-select-option>
+              <a-select-option value="water_target_detection">水上目标检测算法</a-select-option>
+            </a-select>
+          </a-form-item>
           <a-form-item label="任务描述">
             <a-textarea v-model:value="formData.description" rows="3" placeholder="请输入任务描述" />
           </a-form-item>
@@ -89,6 +105,7 @@ const tableData = ref([
     name: '北区日常巡检任务',
     startTime: '2024-01-15 09:00:00',
     routeName: '北区巡检航线',
+    algorithm: 'road_crack_detection',
     status: 'pending',
     createdAt: '2024-01-10 14:30:00',
     description: '对北区进行日常巡检'
@@ -98,6 +115,7 @@ const tableData = ref([
     name: '南区应急响应任务',
     startTime: '2024-01-16 10:30:00',
     routeName: '南区巡检航线',
+    algorithm: 'fire_smoke_detection',
     status: 'approved',
     createdAt: '2024-01-11 16:45:00',
     description: '南区发生紧急情况，需要无人机响应'
@@ -107,6 +125,7 @@ const tableData = ref([
     name: '设备检测任务',
     startTime: '2024-01-14 08:00:00', 
     routeName: '应急响应航线',
+    algorithm: 'engineering_vehicle_detection',
     status: 'completed',
     createdAt: '2024-01-09 10:20:00',
     description: '对关键设备进行检测'
@@ -132,6 +151,12 @@ const columns = [
     dataIndex: 'routeName',
     key: 'routeName', 
     width: 150
+  },
+  {
+    title: '执行算法',
+    dataIndex: 'algorithm',
+    key: 'algorithm',
+    width: 200
   },
   {
     title: '状态',
@@ -168,6 +193,7 @@ const formData = ref({
   name: '',
   startTime: null,
   routeId: '',
+  algorithm: '',
   description: ''
 })
 
@@ -175,7 +201,7 @@ const formData = ref({
 const getStatusColor = (status: string) => {
   const colors = {
     pending: 'orange',
-    approved: 'green', 
+    approved: 'green',
     completed: 'default'
   }
   return colors[status] || 'default'
@@ -188,6 +214,22 @@ const getStatusText = (status: string) => {
     completed: '已结束'
   }
   return texts[status] || status
+}
+
+// 算法相关方法
+const getAlgorithmText = (algorithm: string) => {
+  const algorithms = {
+    drainage_cover_detection: '高速排水沟盖板缺失检测算法',
+    isolation_fence_damage_detection: '高速隔离栏破损检测算法',
+    urban_garbage_detection: '城市垃圾堆检测算法',
+    safety_helmet_recognition: '安全帽识别算法',
+    engineering_vehicle_detection: '工程车辆检测算法',
+    road_crack_detection: '道路裂纹检测算法',
+    fire_smoke_detection: '烟火检测算法',
+    general_person_vehicle_detection: '通用人车检测算法',
+    water_target_detection: '水上目标检测算法'
+  }
+  return algorithms[algorithm] || algorithm
 }
 
 // 事件处理方法
@@ -203,6 +245,7 @@ const handleSubmit = () => {
     name: '',
     startTime: null,
     routeId: '',
+    algorithm: '',
     description: ''
   }
 }
@@ -214,6 +257,7 @@ const handleCancel = () => {
     name: '',
     startTime: null,
     routeId: '',
+    algorithm: '',
     description: ''
   }
 }
