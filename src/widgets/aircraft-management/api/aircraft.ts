@@ -42,6 +42,7 @@ const mockAircraftData: AircraftModel[] = [
         gimbalType: "3轴机械云台"
       }
     },
+    imageUrl: "/img/thumbnail/basemap/google_img.png", // 临时使用占位图
     status: 1,
     createdAt: "2024-01-15T10:30:00Z",
     updatedAt: "2024-01-15T10:30:00Z",

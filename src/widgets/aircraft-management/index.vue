@@ -1,5 +1,21 @@
 <template>
   <mars-dialog title="机型管理" icon="drone" custom-class="aircraft-management-panel" :draggable="true" width="1100" height="700" top="90" left="80">
+    <!-- 统计信息 -->
+    <div class="stats-panel">
+      <div class="stat-item total">
+        <div class="label">机型总数</div>
+        <div class="value">{{ stats.totalCount }}</div>
+      </div>
+      <div class="stat-item active">
+        <div class="label">启用中</div>
+        <div class="value">{{ stats.activeCount }}</div>
+      </div>
+      <div class="stat-item inactive">
+        <div class="label">已禁用</div>
+        <div class="value">{{ stats.inactiveCount }}</div>
+      </div>
+    </div>
+
     <!-- 顶部工具栏 -->
     <div class="aircraft-toolbar">
       <div class="search-controls">
@@ -23,6 +39,19 @@
           <mars-icon icon="refresh" :width="16" />
           刷新
         </mars-button>
+        <a-dropdown v-if="selectedRowKeys.length > 0">
+          <template #overlay>
+            <a-menu>
+              <a-menu-item @click="handleBatchStatus(1)">批量启用</a-menu-item>
+              <a-menu-item @click="handleBatchStatus(0)">批量禁用</a-menu-item>
+              <a-menu-item @click="handleBatchDelete" style="color: #ff4d4f">批量删除</a-menu-item>
+            </a-menu>
+          </template>
+          <mars-button>
+            批量操作
+            <mars-icon icon="down" :width="16" />
+          </mars-button>
+        </a-dropdown>
       </div>
     </div>
 
@@ -33,9 +62,21 @@
         :data-source="aircraftList"
         :pagination="paginationConfig"
         :loading="loading"
+        :row-selection="rowSelection"
         row-key="id"
         @change="handleTableChange"
       >
+        <!-- 图片列自定义渲染 -->
+        <template #imageUrl="{ record }">
+          <img 
+            v-if="record.imageUrl" 
+            :src="record.imageUrl" 
+            style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px" 
+            alt="机型图片"
+          />
+          <mars-icon v-else icon="drone" :width="30" color="#999" />
+        </template>
+
         <!-- 状态列自定义渲染 -->
         <template #status="{ record }">
           <span :class="`status-tag ${record.status === 1 ? 'active' : 'inactive'}`">
@@ -82,7 +123,8 @@ import { useWidget } from "@mars/common/store/widget"
 import AircraftForm from "./components/AircraftForm.vue"
 import { $message } from "@mars/components/mars-ui"
 import * as aircraftApi from "@mars/widgets/aircraft-management/api/aircraft"
-import type { AircraftModel, AircraftSearchParams } from "./types/index"
+import type { AircraftModel, AircraftSearchParams, AircraftStats } from "./types/index"
+import { Modal } from "ant-design-vue"
 
 
 
@@ -100,6 +142,23 @@ const currentAircraft = ref<AircraftModel | null>(null)
 const deleteTarget = ref<AircraftModel | null>(null)
 const isEditMode = ref(false)
 
+// 统计数据
+const stats = ref<AircraftStats>({
+  totalCount: 0,
+  activeCount: 0,
+  inactiveCount: 0,
+  manufacturerStats: []
+})
+
+// 多选相关
+const selectedRowKeys = ref<number[]>([])
+const rowSelection = {
+  selectedRowKeys: selectedRowKeys,
+  onChange: (keys: number[]) => {
+    selectedRowKeys.value = keys
+  }
+}
+
 // 分页配置
 const paginationConfig = reactive({
   current: 1,
@@ -112,6 +171,13 @@ const paginationConfig = reactive({
 
 // 表格列配置
 const tableColumns = [
+  {
+    title: "图片",
+    dataIndex: "imageUrl",
+    key: "imageUrl",
+    width: 80,
+    slots: { customRender: "imageUrl" }
+  },
   {
     title: "机型名称",
     dataIndex: "modelName",
@@ -195,11 +261,21 @@ const loadAircraftList = async () => {
     const response = await aircraftApi.getAircraftList(searchParams.value)
     aircraftList.value = response.data.records
     paginationConfig.total = response.data.total
+    loadStats()
   } catch (error) {
     console.error("加载机型列表失败:", error)
     $message("加载机型列表失败", "error")
   } finally {
     loading.value = false
+  }
+}
+
+const loadStats = async () => {
+  try {
+    const res = await aircraftApi.getAircraftStats()
+    stats.value = res.data
+  } catch (error) {
+    console.error("加载统计失败", error)
   }
 }
 
@@ -262,6 +338,45 @@ const handleToggleStatus = async (aircraft: AircraftModel) => {
   }
 }
 
+const handleBatchDelete = () => {
+  if (selectedRowKeys.value.length === 0) return
+  
+  Modal.confirm({
+    title: "确认批量删除",
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个机型吗？此操作不可恢复。`,
+    okType: "danger",
+    onOk: async () => {
+      try {
+        await aircraftApi.batchDeleteAircraft(selectedRowKeys.value)
+        $message("批量删除成功", "success")
+        selectedRowKeys.value = []
+        loadAircraftList()
+      } catch (error) {
+        $message("批量删除失败", "error")
+      }
+    }
+  })
+}
+
+const handleBatchStatus = (status: number) => {
+  if (selectedRowKeys.value.length === 0) return
+
+  Modal.confirm({
+    title: status === 1 ? "确认批量启用" : "确认批量禁用",
+    content: `确定要${status === 1 ? "启用" : "禁用"}选中的 ${selectedRowKeys.value.length} 个机型吗？`,
+    onOk: async () => {
+      try {
+        await aircraftApi.batchUpdateAircraftStatus(selectedRowKeys.value, status)
+        $message("批量更新状态成功", "success")
+        selectedRowKeys.value = []
+        loadAircraftList()
+      } catch (error) {
+        $message("批量更新状态失败", "error")
+      }
+    }
+  })
+}
+
 const handleTableChange = (pagination: any) => {
   paginationConfig.current = pagination.current
   paginationConfig.pageSize = pagination.pageSize
@@ -294,6 +409,42 @@ const handleFormSuccess = () => {
     .action-controls {
       display: flex;
       gap: 8px;
+    }
+  }
+
+  .stats-panel {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    
+    .stat-item {
+      flex: 1;
+      background: var(--mars-control-bg);
+      padding: 16px;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      
+      .label {
+        font-size: 14px;
+        color: var(--mars-text-color-secondary);
+      }
+      
+      .value {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--mars-text-color);
+      }
+      
+      &.active .value {
+        color: #52c41a;
+      }
+      
+      &.inactive .value {
+        color: #ff4d4f;
+      }
     }
   }
 

@@ -17,6 +17,10 @@
           <a-form-item label="机型编码" name="modelCode">
             <mars-input v-model:value="formData.modelCode" placeholder="请输入机型编码" :maxlength="50" />
           </a-form-item>
+
+          <a-form-item label="机型图片" name="imageUrl">
+            <mars-input v-model:value="formData.imageUrl" placeholder="请输入图片URL" :maxlength="200" />
+          </a-form-item>
         </div>
 
         <!-- 飞行性能参数 -->
@@ -158,6 +162,7 @@ const formData = reactive({
   payloadCapacity: undefined as number | undefined,
   batteryCapacity: undefined as number | undefined,
   specifications: "",
+  imageUrl: "",
   status: 1
 })
 
@@ -213,6 +218,7 @@ watch(
           maxSpeed: props.aircraftData.maxSpeed,
           payloadCapacity: props.aircraftData.payloadCapacity,
           batteryCapacity: props.aircraftData.batteryCapacity,
+          imageUrl: props.aircraftData.imageUrl || "",
           status: props.aircraftData.status || 1
         })
 
@@ -246,6 +252,7 @@ const resetForm = () => {
     payloadCapacity: undefined,
     batteryCapacity: undefined,
     specifications: "",
+    imageUrl: "",
     status: 1
   })
   specificationsText.value = ""

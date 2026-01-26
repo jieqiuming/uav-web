@@ -8,6 +8,7 @@ export interface AircraftModel {
   modelName: string
   manufacturer?: string
   modelCode: string
+  imageUrl?: string // 机型图片URL
   maxFlightTime?: number // 最大飞行时间(分钟)
   maxFlightDistance?: number // 最大飞行距离(公里)
   maxAltitude?: number // 最大飞行高度(米)
@@ -26,6 +27,7 @@ export interface CreateAircraftDTO {
   modelName: string
   manufacturer?: string
   modelCode: string
+  imageUrl?: string
   maxFlightTime?: number
   maxFlightDistance?: number
   maxAltitude?: number
