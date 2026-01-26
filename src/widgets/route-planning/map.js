@@ -43,6 +43,86 @@ function addGraphicLayers() {
   // 创建专门的航点图层
   waypointLayer = new mars3d.layer.GraphicLayer()
   map.addLayer(waypointLayer)
+
+  // 添加演示用的禁飞区
+  addMockNoFlyZone()
+}
+
+// 模拟禁飞区 (赤壁附近)
+const noFlyZones = [
+  {
+    center: [113.915, 29.780],
+    radius: 500, // 半径500米
+    maxAlt: 200, // 高度限制200米
+    name: "演示禁飞区A"
+  }
+]
+
+function addMockNoFlyZone() {
+  const noFlyLayer = new mars3d.layer.GraphicLayer()
+  map.addLayer(noFlyLayer)
+
+  noFlyZones.forEach(zone => {
+    const graphic = new mars3d.graphic.CircleEntity({
+      position: [zone.center[0], zone.center[1], 0],
+      style: {
+        radius: zone.radius,
+        height: 0,
+        diffHeight: zone.maxAlt,
+        color: "#ff0000",
+        opacity: 0.3,
+        outline: true,
+        outlineColor: "#ff0000",
+        label: {
+          text: zone.name,
+          font_size: 18,
+          color: "#ffffff",
+          pixelOffsetY: -10,
+          distanceDisplayCondition: true,
+          distanceDisplayCondition_far: 10000,
+          distanceDisplayCondition_near: 0
+        }
+      }
+    })
+    noFlyLayer.addGraphic(graphic)
+  })
+}
+
+// 检查航线是否侵入禁飞区
+export function checkNoFlyZone(waypointList) {
+  if (waypointList.length < 2) return { valid: true, msg: "航线安全" }
+
+  // 1. 检查航点是否在禁飞区内
+  for (let i = 0; i < waypointList.length; i++) {
+    const wp = waypointList[i]
+    for (const zone of noFlyZones) {
+      const distance = mars3d.MeasureUtil.getDistance([wp.lng, wp.lat], zone.center)
+      if (distance <= zone.radius && wp.alt <= zone.maxAlt) {
+        return { valid: false, msg: `警告：航点 ${i + 1} 位于 ${zone.name} 内！` }
+      }
+    }
+  }
+
+  // 2. 简单的线段相交检查 (简化版：仅检查线段中点)
+  for (let i = 0; i < waypointList.length - 1; i++) {
+    const p1 = waypointList[i]
+    const p2 = waypointList[i + 1]
+
+    // 取中点检查
+    const midLng = (p1.lng + p2.lng) / 2
+    const midLat = (p1.lat + p2.lat) / 2
+    // 假设高度为线性插值（最保守取较小值或较大值，这里简化取最大值检查）
+    const maxH = Math.max(p1.alt, p2.alt)
+
+    for (const zone of noFlyZones) {
+      const distance = mars3d.MeasureUtil.getDistance([midLng, midLat], zone.center)
+      if (distance <= zone.radius && maxH <= zone.maxAlt) {
+        return { valid: false, msg: `警告：航段 ${i + 1}-${i + 2} 可能穿越 ${zone.name}！` }
+      }
+    }
+  }
+
+  return { valid: true, msg: "航线安全" }
 }
 
 // 启用航点编辑模式
@@ -115,6 +195,8 @@ async function addWaypointGraphic(waypoint, index) {
       verticalOrigin: mars3d.Cesium.VerticalOrigin.BOTTOM,
       scale: 0.8
     },
+    hasEdit: true, // 开启编辑功能
+    isAutoEditing: false, // 默认不处于编辑状态
     attr: {
       index,
       waypoint
@@ -123,6 +205,21 @@ async function addWaypointGraphic(waypoint, index) {
 
   waypointLayer.addGraphic(graphic)
   waypointGraphics.push(graphic)
+
+  // 绑定编辑事件
+  graphic.on(mars3d.EventType.editMovePoint, (event) => {
+    // 拖拽移动时触发
+    const point = event.point
+    waypoint.lng = point.lng
+    waypoint.lat = point.lat
+    waypoint.alt = point.alt
+
+    // 抛出航点更新事件
+    eventTarget.fire("waypointUpdated", { index: index - 1, waypoint })
+
+    // 更新连线
+    updateRouteConnection()
+  })
 }
 
 // 获取航点标记图标
@@ -146,6 +243,25 @@ async function getWaypointMarkerImg(num) {
   ctx.fillText(num, num < 10 ? 6 : 3, 10)
 
   return canvas.toDataURL("image/png")
+}
+
+// 更新航线连接
+function updateRouteConnection() {
+  if (waypoints.length < 2) {
+    if (routePreviewGraphic) {
+      waypointLayer.removeGraphic(routePreviewGraphic)
+      routePreviewGraphic = null
+    }
+    return
+  }
+
+  const positions = waypoints.map((wp) => [wp.lng, wp.lat, wp.alt])
+
+  if (routePreviewGraphic) {
+    routePreviewGraphic.positions = positions
+  } else {
+    showRouteConnection(waypoints)
+  }
 }
 
 // 显示航线连接
@@ -181,10 +297,10 @@ export function clearWaypoints() {
   waypointLayer.clear()
   waypointGraphics = []
   routePreviewGraphic = null
-  
+
   // 静默停止仿真（避免在清理过程中触发事件）
   stopSimulationInternal()
-  
+
   console.log("航点已清空，仿真已停止")
 }
 
@@ -315,7 +431,7 @@ function stopSimulationInternal() {
 // 停止仿真
 export function stopSimulation() {
   stopSimulationInternal()
-  
+
   // 触发状态更新事件
   setTimeout(() => {
     eventTarget.fire("simulationStatusChanged", {
@@ -336,7 +452,7 @@ export function pauseSimulation() {
   if (currentRoute && currentRoute.isStart) {
     currentRoute.pause()
     console.log("仿真飞行已暂停")
-    
+
     // 延迟触发状态更新事件
     setTimeout(() => {
       eventTarget.fire("simulationStatusChanged", {
@@ -353,7 +469,7 @@ export function resumeSimulation() {
   if (currentRoute && currentRoute.isPause) {
     currentRoute.proceed()
     console.log("仿真飞行已恢复")
-    
+
     // 延迟触发状态更新事件
     setTimeout(() => {
       eventTarget.fire("simulationStatusChanged", {

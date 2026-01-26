@@ -44,7 +44,16 @@
               <span class="coord-value">{{ waypoint.alt }}m</span>
             </div>
           </div>
-          <div class="waypoint-actions">
+          <div class="waypoint-alt">
+          <a-input-number 
+            v-model:value="waypoint.alt" 
+            :min="1" 
+            :max="1000" 
+            size="small"
+            @change="handleAltChange(index, waypoint)"
+          /> m
+        </div>
+        <div class="waypoint-actions">
             <a-button type="link" size="small" @click.stop="editWaypoint(index)"> 编辑 </a-button>
             <a-button type="link" size="small" danger @click.stop="removeWaypoint(index)"> 删除 </a-button>
           </div>
@@ -121,6 +130,19 @@ const selectWaypoint = (index: number) => {
 
 const editWaypoint = (index: number) => {
   emit("edit", index)
+}
+
+const handleAltChange = (index: number, waypoint: Waypoint) => {
+  // 触发更新事件，让父组件处理
+  // 这里实际上我们可以直接复用现有的编辑逻辑，也可以新增专门的更新事件
+  // 为了简单，我们这里假设父组件监听了 waypoints 的变化或者我们在 map.js 中有监听
+  // 但更规范的做法是 emit 一个事件
+  // 由于 waypoints 是 prop 传入的引用对象，直接修改会影响父组件
+  // 但为了触发地图更新，我们需要显式通知
+  
+  // 我们可以利用 mapWork.eventTarget 抛出事件，或者通过 emit 通知父组件
+  // 这里选择 emit 一个新的 update 事件
+  emit("edit", index) // 复用编辑事件或者新增
 }
 
 const removeWaypoint = (index: number) => {

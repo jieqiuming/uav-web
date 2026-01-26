@@ -65,7 +65,10 @@
       
       <div class="editing-actions">
         <a-space direction="vertical" style="width: 100%">
-          <a-button block @click="clearWaypoints">清空航点</a-button>
+          <a-space style="width: 100%">
+             <a-button block @click="clearWaypoints">清空</a-button>
+             <a-button block @click="applyHeightToAll">重置高度</a-button>
+          </a-space>
           <a-button 
             block 
             type="primary" 
@@ -167,6 +170,10 @@ onMounted(() => {
   // 监听仿真状态变化
   mapWork.eventTarget.on("simulationStatusChanged", handleSimulationStatusChanged)
   
+  // 监听航点拖拽更新
+  mapWork.eventTarget.on("waypointUpdated", handleWaypointUpdated)
+  
+  
   // 监听widget数据更新（用于编辑模式）
   if (currentWidget) {
     currentWidget.onUpdate((data: any) => {
@@ -181,6 +188,7 @@ onUnmounted(() => {
   mapWork.eventTarget.off("waypointAdded", handleWaypointAdded)
   mapWork.eventTarget.off("simulationComplete", handleSimulationComplete)
   mapWork.eventTarget.off("simulationStatusChanged", handleSimulationStatusChanged)
+  mapWork.eventTarget.off("waypointUpdated", handleWaypointUpdated)
 })
 
 // 事件处理
@@ -209,6 +217,23 @@ const handleWaypointAdded = (event: any) => {
   }
   waypoints.value.push(waypoint)
   mapWork.updateWaypointDisplay(waypoints.value)
+  
+  // 检查禁飞区
+  validateRoute()
+}
+
+const handleWaypointUpdated = (event: any) => {
+  const { index, waypoint } = event
+  if (index >= 0 && index < waypoints.value.length) {
+    waypoints.value[index] = {
+      ...waypoints.value[index],
+      lng: waypoint.lng,
+      lat: waypoint.lat,
+      alt: waypoint.alt
+    }
+    // 检查禁飞区
+    validateRoute()
+  }
 }
 
 const removeWaypoint = (index: number) => {
@@ -228,6 +253,18 @@ const clearWaypoints = () => {
   
   waypoints.value = []
   mapWork.clearWaypoints()
+}
+
+const applyHeightToAll = () => {
+  if (waypoints.value.length === 0) return
+  
+  waypoints.value.forEach(wp => {
+    wp.alt = routeForm.altitude
+  })
+  
+  mapWork.updateWaypointDisplay(waypoints.value)
+  validateRoute()
+  message.success(`已将所有航点高度重置为 ${routeForm.altitude}米`)
 }
 
 const previewRoute = () => {
@@ -357,8 +394,19 @@ const handleWaypointSelect = (index: number) => {
 }
 
 const handleWaypointEdit = (index: number) => {
-  // 暂时用简单的提示，后续可以实现编辑弹窗
-  message.info(`编辑航点 ${index + 1} 功能开发中...`)
+  // 航点信息(如高度)在组件中修改后，直接更新地图显示
+  mapWork.updateWaypointDisplay(waypoints.value)
+  
+  // 实时检查禁飞区
+  validateRoute()
+}
+
+const validateRoute = () => {
+  const result = mapWork.checkNoFlyZone(waypoints.value)
+  if (!result.valid) {
+    message.warning(result.msg)
+  }
+  return result.valid
 }
 
 // 加载编辑路线数据
