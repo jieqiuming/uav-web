@@ -193,7 +193,7 @@
       "skipLevelOfDetail": true,
       "cacheBytes": 1073741824,
       "maximumCacheOverflowBytes": 2147483648,
-      "show": false,
+      "show": true,
       "flyTo": true
     },
     {
