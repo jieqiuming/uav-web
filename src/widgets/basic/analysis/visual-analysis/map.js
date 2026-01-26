@@ -119,7 +119,7 @@ export function addRandomGraphicByCount(count) {
     const index = j + 1
 
     const graphic = new mars3d.graphic.ViewShed({
-      position: position,
+      position,
       style: {
         angle: 60,
         angle2: 45,
@@ -128,7 +128,7 @@ export function addRandomGraphicByCount(count) {
         pitch: -12,
         addHeight: 0.5
       },
-      attr: { index: index }
+      attr: { index }
     })
     graphicLayer.addGraphic(graphic)
   }

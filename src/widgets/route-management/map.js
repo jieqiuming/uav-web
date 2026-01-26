@@ -79,7 +79,7 @@ async function addWaypointMarker(position, index, altitude) {
     },
     attr: {
       type: "waypoint",
-      index: index
+      index
     }
   })
 
@@ -113,7 +113,7 @@ async function getWaypointMarkerImg(num) {
 // 添加航线路径
 function addRoutePath(positions, routeData) {
   const pathGraphic = new mars3d.graphic.PolylineEntity({
-    positions: positions,
+    positions,
     style: {
       width: 4,
       color: "#52c41a",
@@ -432,7 +432,7 @@ export function exportRoutes(routeIds = null) {
       exportTime: new Date().toISOString(),
       version: "1.0",
       routeCount: routes.length,
-      routes: routes
+      routes
     }
 
     return exportData

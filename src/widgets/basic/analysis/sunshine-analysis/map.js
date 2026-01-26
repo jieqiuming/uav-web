@@ -140,7 +140,7 @@ export function drawArea(date) {
           startDate: new Date(date + " 08:00:00"),
           endDate: new Date(date + " 18:00:00"),
 
-          positions: positions,
+          positions,
           step: 3,
           minHeight: averageAlt
           // maxHeight: 30 //可以多层

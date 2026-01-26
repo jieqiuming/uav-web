@@ -258,7 +258,7 @@ function showInterResult(list) {
 
     // 三角网面（单击用）
     const primitivePoly = new mars3d.graphic.PolygonPrimitive({
-      positions: positions,
+      positions,
       style: {
         color: mars3d.Cesium.Color.fromCssColorString("#ffffff").withAlpha(0.01)
       }
@@ -268,7 +268,7 @@ function showInterResult(list) {
 
     // 三角网边线
     const primitiveLine = new mars3d.graphic.PolylinePrimitive({
-      positions: positions,
+      positions,
       style: {
         width: 1,
         color: mars3d.Cesium.Color.fromCssColorString("#ffff00").withAlpha(0.3)
