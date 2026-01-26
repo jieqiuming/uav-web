@@ -256,7 +256,9 @@ const clearWaypoints = () => {
 }
 
 const applyHeightToAll = () => {
-  if (waypoints.value.length === 0) return
+  if (waypoints.value.length === 0) {
+    return
+  }
   
   waypoints.value.forEach(wp => {
     wp.alt = routeForm.altitude

@@ -90,7 +90,9 @@ function addMockNoFlyZone() {
 
 // 检查航线是否侵入禁飞区
 export function checkNoFlyZone(waypointList) {
-  if (waypointList.length < 2) return { valid: true, msg: "航线安全" }
+  if (waypointList.length < 2) {
+    return { valid: true, msg: "航线安全" }
+  }
 
   // 1. 检查航点是否在禁飞区内
   for (let i = 0; i < waypointList.length; i++) {
