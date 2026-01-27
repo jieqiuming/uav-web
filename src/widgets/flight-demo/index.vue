@@ -82,7 +82,7 @@
       </div>
     </div>
   </mars-dialog>
-  <fixedRoute-info top="500" />
+  <fixedRoute-info />
 </template>
 
 <script setup lang="ts">
@@ -279,20 +279,37 @@ const updateRoll = () => {
 .play-control {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
 
   .start-btn {
-    width: 302px;
+    flex: 1;
   }
 
   .pause-btn,
   .proceed-btn,
   .stop-btn {
-    width: 145px;
+    flex: 1;
+  }
+}
+
+.f-mb {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
   }
 }
 
 .ant-form-item .ant-select,
 .sliderlen {
-  width: 100px;
+  width: 100%;
+}
+
+:deep(.mars-dialog-content) {
+  padding-top: 10px;
 }
 </style>

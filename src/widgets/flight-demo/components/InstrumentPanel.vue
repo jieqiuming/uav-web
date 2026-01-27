@@ -78,11 +78,8 @@ const horizonStyle = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 10px;
-  border-radius: 8px;
   width: 100%;
-  height: 140px;
+  padding: 10px 0;
 }
 
 .instrument {

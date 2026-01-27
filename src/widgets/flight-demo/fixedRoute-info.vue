@@ -1,73 +1,67 @@
 <template>
-  <mars-dialog :visible="true" right="10" :top="props.top" :bottom="props.top ? null : 60" width="330">
-    <div class="percent">
-      <a-progress :percent="formState.percent" size="small" color="#fff" />
-    </div>
+  <mars-dialog :visible="true" right="10" bottom="60" width="360">
+    <div class="flight-dashboard" style="min-height: 200px">
+      <!-- 进度条 -->
+      <div class="progress-section">
+        <div class="progress-bar-container">
+          <div class="p-label" style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #aaa;">
+            <span>任务进度</span>
+            <span>{{ formState.percent }}%</span>
+          </div>
+          <a-progress :percent="formState.percent" :show-info="false" stroke-color="#52c41a" trail-color="rgba(255,255,255,0.1)" />
+        </div>
+      </div>
+      
+      <!-- 仪表盘区域 -->
+      <div class="dashboard-instruments">
+        <InstrumentPanel 
+          :speed="formState.speed" 
+          :altitude="formState.altitude" 
+          :pitch="formState.pitch" 
+          :roll="formState.roll" 
+          :heading="formState.heading"
+        />
+      </div>
+
+      <!-- 数据统计区域 -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-value">{{ formState.td_length || '0米' }}</div>
+          <div class="stat-label">已飞距离</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">{{ formState.td_times || '00:00:00' }}</div>
+          <div class="stat-label">已飞时间</div>
+        </div>
+        <div class="stat-box secondary">
+          <div class="stat-value small">{{ formState.td_alllength || '0米' }}</div>
+          <div class="stat-label">总距离</div>
+        </div>
+        <div class="stat-box secondary">
+          <div class="stat-value small">{{ formState.td_alltimes || '00:00:00' }}</div>
+          <div class="stat-label">预计总时</div>
+        </div>
+      </div>
     
-    <!-- 仪表盘 -->
-    <div class="dashboard-container">
-      <InstrumentPanel 
-        :speed="formState.speed" 
-        :altitude="formState.altitude" 
-        :pitch="formState.pitch" 
-        :roll="formState.roll" 
-        :heading="formState.heading"
-      />
-    </div>
-
-    <div class="already">
-      <a-space>
-        <div class="already-length">
-          <p class="mars-text">{{ formState.td_length }}</p>
-          <p>已飞行长度</p>
+      <!-- 位置信息（折叠或简化显示）-->
+      <div class="position-bar">
+        <div class="pos-item">
+          <mars-icon icon="local" width="14" color="#1890ff"/>
+          <span>{{ formState.td_jd ? Number(formState.td_jd).toFixed(6) : '-' }}, {{ formState.td_wd ? Number(formState.td_wd).toFixed(6) : '-' }}</span>
         </div>
-
-        <div class="already-time">
-          <p class="mars-text">{{ formState.td_times }}</p>
-          <p>已飞行时间</p>
+        <div class="pos-item">
+          <mars-icon icon="send-plane" width="14" color="#1890ff"/>
+          <span>AGL: {{ formState.td_gd || '0米' }}</span>
         </div>
-      </a-space>
-
-    </div>
-
-    <div class="postions">
-      <a-space>
-        <div class="postions-lng">
-          <p class="mars-text">{{ formState.td_jd }}</p>
-          <p>经度</p>
-        </div>
-
-        <div class="postions-lat">
-          <p class="mars-text">{{ formState.td_wd }}</p>
-          <p>纬度</p>
-        </div>
-
-        <div class="postions-alt">
-          <p class="mars-text">{{ formState.td_gd }}</p>
-          <p>飞行高程</p>
-        </div>
-      </a-space>
-
-    </div>
-
-    <div class="all">
-      <div class="all-length">
-        <p class="mars-text">{{ formState.td_alllength }}</p>
-        <p>总长度</p>
-      </div>
-      <div class="all-time">
-        <p class="mars-text">{{ formState.td_alltimes }}</p>
-        <p>总时长</p>
       </div>
     </div>
-
   </mars-dialog>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive } from "vue"
+import { onMounted, reactive, defineProps, defineEmits, onUnmounted } from "vue"
 import type { UnwrapRef } from "vue"
-import * as mapWork from "./map"
+import * as mapWork from "./map.js"
 import InstrumentPanel from "./components/InstrumentPanel.vue"
 
 interface FormState {
@@ -86,11 +80,6 @@ interface FormState {
   heading: number
 }
 
-// mapWork是map.js内定义的所有对象， 在项目中使用时可以改为import方式使用:  import * as mapWork from './map.js'
-
-// const mars3d = mapWork.mars3d
-// const Cesium = mapWork.Cesium
-
 const formState: UnwrapRef<FormState> = reactive({
   td_alllength: "",
   td_length: "",
@@ -107,34 +96,44 @@ const formState: UnwrapRef<FormState> = reactive({
   heading: 0
 })
 
+const props = defineProps<{
+  top?: string
+}>()
 
-const props = withDefaults(
-  defineProps<{
-    top: string
-  }>(),
-  {
-    top: null
-  }
-)
-
+let eventHandlerRoam: any
+let eventHandlerEnd: any
 
 onMounted(() => {
+  console.log("FixedRouteInfo mounted", mapWork.fixedRoute)
   if (mapWork.fixedRoute?.info) {
     showInfo(mapWork.fixedRoute.info)
   }
-  mapWork.eventTarget.on("roamLineChange", (item: any) => {
+  
+  eventHandlerRoam = (item: any) => {
     showInfo(item)
-  })
+  }
+  mapWork.eventTarget.on("roamLineChange", eventHandlerRoam)
 
-  mapWork.eventTarget.on("endRoam", (item: any) => {
-    showInfo(mapWork.fixedRoute.info)
-  })
+  eventHandlerEnd = (item: any) => {
+     if (mapWork.fixedRoute?.info) {
+        showInfo(mapWork.fixedRoute.info)
+     }
+  }
+  mapWork.eventTarget.on("endRoam", eventHandlerEnd)
+})
 
+onUnmounted(() => {
+  if (eventHandlerRoam) {
+    mapWork.eventTarget.off("roamLineChange", eventHandlerRoam)
+  }
+  if (eventHandlerEnd) {
+    mapWork.eventTarget.off("endRoam", eventHandlerEnd)
+  }
 })
 
 function showInfo(item: any) {
   let val = Math.ceil((item.distance * 100) / item.distance_all)
-  if (val < 1) {
+  if (val < 0) {
     val = 0
   }
   if (val > 100) {
@@ -151,7 +150,7 @@ function showInfo(item: any) {
   formState.td_alllength = mapWork.formatDistance(item.distance_all)
   
   // 更新仪表盘数据
-  formState.speed = item.speed || 0 // item可能不直接包含speed，需确认
+  formState.speed = item.speed || 0 
   formState.altitude = item.point?.alt || 0
   formState.heading = item.heading || 0
   formState.pitch = item.pitch || 0
@@ -165,84 +164,83 @@ export default {
 }
 </script>
 
-
 <style scoped lang="less">
-:deep(.info-view) {
-  width: 200px;
-  top: auto !important;
-  bottom: 60px;
-  overflow-y: hidden;
-  z-index: 0 !important;
-}
-
-:deep(.ant-progress) {
-  .ant-progress-outer {
-    .ant-progress-inner {
-      background-color: rgba(231, 231, 231, 0.15) !important;
+.flight-dashboard {
+  padding: 0 5px;
+  background: rgba(19, 24, 35, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 4px;
+  padding-top: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  position: relative;
+  
+  .progress-section {
+    margin-bottom: 20px;
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 4px;
+  }
+  
+  .dashboard-instruments {
+    margin-bottom: 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+    
+    .stat-box {
+      background: rgba(0,0,0,0.4);
+      padding: 15px 10px;
+      border-radius: 4px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      
+      .stat-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: #fff;
+        line-height: 1.2;
+        margin-bottom: 4px;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        
+        &.small {
+          font-size: 16px;
+          color: #ccc;
+        }
+      }
+      
+      .stat-label {
+        font-size: 12px;
+        color: #999;
+      }
+      
+      &.secondary {
+        background: rgba(0,0,0,0.2);
+      }
     }
   }
-
-  .ant-progress-text {
-    color: #fff;
+  
+  .position-bar {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.2);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #bbb;
+    
+    .pos-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
   }
-}
-
-.percent {
-  width: 300px;
-  height: 30px;
-  line-height: 30px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.2);
-
-  .ant-progress {
-    width: 274px;
-    margin-left: 10px;
-  }
-}
-
-.already {
-  margin-top: 10px;
-  width: 300px;
-
-  .already-length,
-  .already-time {
-    width: 146px;
-    height: 60px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.2);
-    text-align: center;
-
-
-  }
-}
-
-.postions {
-  margin-top: 10px;
-  width: 300px;
-
-  .postions-lng,
-  .postions-lat,
-  .postions-alt {
-    width: 95px;
-    height: 60px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.2);
-    text-align: center;
-  }
-}
-
-.all {
-  display: flex;
-  justify-content: space-around;
-  height: 60px;
-  width: 300px;
-  margin-top: 10px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.mars-text {
-  display: inline-block;
-  margin-top: 10px;
 }
 </style>

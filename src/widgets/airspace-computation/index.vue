@@ -243,10 +243,18 @@ const getAlgorithmType = (name: string) => {
 const toggleCard = (algorithmId: string) => {
   expandedCards.value[algorithmId] = !expandedCards.value[algorithmId]
 }
-
+// 选择算法
 const selectAlgorithm = (algorithm: AlgorithmInfo) => {
-  message.success(`已选择算法：${algorithm.name}`)
-  // 这里可以添加选择算法后的逻辑，比如传递给其他模块
+  // message.success(`已选择算法: ${algorithm.name}`)
+  
+  // 跳转到空域申请模块并携带数据
+  isActivate({
+    name: "airspace-application",
+    data: {
+      action: "add_task",
+      algorithm: algorithm.id
+    }
+  })
 }
 
 const filterAlgorithms = () => {
