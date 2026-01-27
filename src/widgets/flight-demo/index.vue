@@ -88,12 +88,30 @@
 <script setup lang="ts">
 import FixedRouteInfo from "./fixedRoute-info.vue"
 
-import { reactive, ref } from "vue"
+import { reactive, ref, onMounted } from "vue"
 import * as mapWork from "./map.js"
 import useLifecycle from "@mars/common/uses/use-lifecycle"
+import { useWidget } from "@mars/common/store/widget"
 
 // 启用map.ts生命周期
 useLifecycle(mapWork)
+const { currentWidget } = useWidget()
+
+onMounted(() => {
+  if (mapWork.fixedRoute?.info) {
+    // 初始显示
+  }
+  
+  // 监听外部数据更新
+  if (currentWidget) {
+    currentWidget.onUpdate((data: any) => {
+      console.log("flight-demo received data:", data)
+      if (data.routeData) {
+        mapWork.updateRoutePaths(data.routeData)
+      }
+    })
+  }
+})
 
 interface FormState {
   isStart: boolean

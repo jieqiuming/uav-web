@@ -153,7 +153,7 @@ const stats = ref<AircraftStats>({
 // 多选相关
 const selectedRowKeys = ref<number[]>([])
 const rowSelection = {
-  selectedRowKeys: selectedRowKeys,
+  selectedRowKeys,
   onChange: (keys: number[]) => {
     selectedRowKeys.value = keys
   }
@@ -339,7 +339,9 @@ const handleToggleStatus = async (aircraft: AircraftModel) => {
 }
 
 const handleBatchDelete = () => {
-  if (selectedRowKeys.value.length === 0) return
+  if (selectedRowKeys.value.length === 0) {
+    return
+  }
   
   Modal.confirm({
     title: "确认批量删除",
@@ -359,7 +361,9 @@ const handleBatchDelete = () => {
 }
 
 const handleBatchStatus = (status: number) => {
-  if (selectedRowKeys.value.length === 0) return
+  if (selectedRowKeys.value.length === 0) {
+    return
+  }
 
   Modal.confirm({
     title: status === 1 ? "确认批量启用" : "确认批量禁用",

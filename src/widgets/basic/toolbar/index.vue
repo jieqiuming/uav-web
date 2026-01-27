@@ -66,6 +66,15 @@ currentWidget.onUpdate((widget: string | any) => {
 const data: any = [
   { name: "图层", icon: "layers", widget: "manage-layers" },
   {
+    name: "业务",
+    icon: "layers",
+    children: [
+      { name: "飞机管理", icon: "config", widget: "aircraft-management" },
+      { name: "航线规划", icon: "move", widget: "route-planning" },
+      { name: "任务管理", icon: "editor", widget: "task-management" }
+    ]
+  },
+  {
     name: "工具",
     icon: "tool",
     children: [
@@ -73,16 +82,7 @@ const data: any = [
       { name: "坐标定位", icon: "local", widget: "location-point" },
       { name: "图上标绘", icon: "hand-painted-plate", widget: "plot" },
       { name: "空间分析", icon: "analysis", widget: "analysis" },
-      { name: "飞行测试", icon: "take-off", widget: "flight-demo" }
-      // { name: "地区导航", icon: "navigation", widget: "location-region" },
-      // { name: "我的标记", icon: "mark", widget: "addmarker" },
-      // { name: "视角书签", icon: "bookmark", widget: "bookmark" },
-      // { name: "地图打印", icon: "printer", widget: "print" },
-      // { name: "飞行漫游", icon: "take-off", widget: "roamLine-list" },
-      // { name: "路线导航", icon: "connection", widget: "query-route" },
-      // { name: "卷帘对比", icon: "switch-contrast", widget: "map-split" },
-      // { name: "分屏对比", icon: "full-screen-play", widget: "map-compare" },
-      // { name: "四屏对比", icon: "full-screen-play", widget: "four-compare" }
+      { name: "飞行演示", icon: "take-off", widget: "flight-demo" }
     ]
   }
 ]

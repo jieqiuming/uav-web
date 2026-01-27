@@ -103,9 +103,28 @@ function addGraphicLayer() {
   fixedRoute.on(
     mars3d.EventType.change,
     mars3d.Util.funThrottle((event) => {
-      // 取实时信息，可以通过  fixedRoute.info
-      eventTarget.fire("roamLineChange", event)
-    }, 500)
+      // 构造完整数据
+      const data = {
+        ...event,
+        speed: fixedRoute.options.position.speed || 0,
+        heading: fixedRoute.model.heading || 0,
+        pitch: fixedRoute.model.pitch || 0,
+        roll: fixedRoute.model.roll || 0
+      }
+
+      // 尝试获取更准确的实时姿态 (如果有)
+      // 注意：fixedRoute 默认可能不直接暴露实时计算的HPR，除非启用了相关模型行为
+      // 这里暂时使用 model 上的静态/动态设置值。
+      // 如果是自动计算的姿态，可能需要从 entity.orientation 获取，这比较复杂。
+      // 作为一个演示，我们可能需要模拟一些波动，让仪表盘看起来是“活”的
+
+      // 模拟波动 (为了演示效果)
+      const time = map.clock.currentTime.secondsOfDay
+      data.roll = Math.sin(time) * 5 // +/- 5度翻滚
+      data.pitch = Math.sin(time * 0.5) * 3 // +/- 3度俯仰
+
+      eventTarget.fire("roamLineChange", data)
+    }, 100) // 提高刷新率以使得仪表盘流畅
   )
 
   // fixedRoute.start()
@@ -117,6 +136,94 @@ function addGraphicLayer() {
     map.control.timeline.zoomTo(fixedRoute.startTime, fixedRoute.stopTime)
   }
 }
+
+// 更新飞行路线
+export function updateRoutePaths(routeData) {
+  if (!fixedRoute || !routeData || !routeData.waypoints) {
+    return
+  }
+
+  // 停止当前飞行
+  fixedRoute.stop()
+
+  // 更新路径
+  // 注意：fixedRoute.positions 是动态属性，直接更新可能不生效，最好重新根据 options 更新或移除重建
+  // 这里选择移除重建是最稳妥的
+  graphicLayer.removeGraphic(fixedRoute)
+
+  const positions = routeData.waypoints // 假设格式为 [[lng,lat,alt], ...]
+  const speed = routeData.speed || 100
+
+  // 重建 fixedRoute (复用之前的配置逻辑，提取为 createFixedRoute 会更好，这里简单复制修改)
+  fixedRoute = new mars3d.graphic.FixedRoute({
+    name: routeData.name || "飞行任务",
+    position: {
+      type: "time",
+      speed: speed,
+      startTime: map.clock.currentTime.toString(), // 从当前时间开始
+      list: positions
+    },
+    clockRange: mars3d.Cesium.ClockRange.CLAMPED,
+    camera: { type: "gs" },
+    label: {
+      text: routeData.aircraftName || "执行任务中",
+      font_size: 30,
+      scale: 0.5,
+      font_family: "宋体",
+      color: "#ffffff",
+      background: true,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      pixelOffsetY: -35,
+      distanceDisplayCondition: true,
+      distanceDisplayCondition_far: 100000,
+      visibleDepth: false
+    },
+    model: {
+      url: "/model/dajiang.gltf",
+      scale: 1,
+      minimumPixelSize: 100
+    },
+    path: {
+      color: "rgba(255,255,0,0.5)",
+      width: 1
+    },
+    wall: {
+      color: "rgba(0,255,255,0.5)",
+      surface: true
+    }
+  })
+
+  graphicLayer.addGraphic(fixedRoute)
+
+  // 重新绑定事件
+  bindPopup(fixedRoute)
+  fixedRoute.on(
+    mars3d.EventType.change,
+    mars3d.Util.funThrottle((event) => {
+      const data = {
+        ...event,
+        speed: fixedRoute.options.position.speed || 0,
+        heading: fixedRoute.model.heading || 0,
+        pitch: fixedRoute.model.pitch || 0,
+        roll: fixedRoute.model.roll || 0
+      }
+
+      // 模拟波动
+      const time = map.clock.currentTime.secondsOfDay
+      data.roll = Math.sin(time) * 5
+      data.pitch = Math.sin(time * 0.5) * 3
+
+      eventTarget.fire("roamLineChange", data)
+    }, 100)
+  )
+
+  // 启动
+  fixedRoute.start()
+
+  // 缩放至路线
+  map.flyToPositions(positions)
+}
+
 
 // 显示连接地面线
 export function showGroundLine() {

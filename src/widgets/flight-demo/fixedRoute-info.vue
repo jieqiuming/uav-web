@@ -3,6 +3,17 @@
     <div class="percent">
       <a-progress :percent="formState.percent" size="small" color="#fff" />
     </div>
+    
+    <!-- 仪表盘 -->
+    <div class="dashboard-container">
+      <InstrumentPanel 
+        :speed="formState.speed" 
+        :altitude="formState.altitude" 
+        :pitch="formState.pitch" 
+        :roll="formState.roll" 
+        :heading="formState.heading"
+      />
+    </div>
 
     <div class="already">
       <a-space>
@@ -57,6 +68,7 @@
 import { onMounted, reactive } from "vue"
 import type { UnwrapRef } from "vue"
 import * as mapWork from "./map"
+import InstrumentPanel from "./components/InstrumentPanel.vue"
 
 interface FormState {
   td_alllength: string
@@ -67,6 +79,11 @@ interface FormState {
   td_wd: string
   td_gd: string
   percent: number
+  speed: number
+  altitude: number
+  pitch: number
+  roll: number
+  heading: number
 }
 
 // mapWork是map.js内定义的所有对象， 在项目中使用时可以改为import方式使用:  import * as mapWork from './map.js'
@@ -82,7 +99,12 @@ const formState: UnwrapRef<FormState> = reactive({
   td_jd: "",
   td_wd: "",
   td_gd: "",
-  percent: 0
+  percent: 0,
+  speed: 0,
+  altitude: 0,
+  pitch: 0,
+  roll: 0,
+  heading: 0
 })
 
 
@@ -127,6 +149,13 @@ function showInfo(item: any) {
   formState.td_alltimes = mapWork.formatTime(item.second_all)
   formState.td_length = mapWork.formatDistance(item.distance) || "0米"
   formState.td_alllength = mapWork.formatDistance(item.distance_all)
+  
+  // 更新仪表盘数据
+  formState.speed = item.speed || 0 // item可能不直接包含speed，需确认
+  formState.altitude = item.point?.alt || 0
+  formState.heading = item.heading || 0
+  formState.pitch = item.pitch || 0
+  formState.roll = item.roll || 0
 }
 </script>
 

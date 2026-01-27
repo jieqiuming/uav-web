@@ -1,0 +1,9 @@
+{
+    "name": "任务管理",
+    "icon": "task",
+    "component": "index.vue",
+    "group": "business",
+    "width": 800,
+    "height": 600,
+    "show": false
+}
