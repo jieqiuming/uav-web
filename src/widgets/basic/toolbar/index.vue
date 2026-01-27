@@ -66,6 +66,14 @@ currentWidget.onUpdate((widget: string | any) => {
 const data: any = [
   { name: "图层", icon: "layers", widget: "manage-layers" },
   {
+    name: "空域",
+    icon: "components",
+    children: [
+      { name: "空域申请", icon: "application-one", widget: "airspace-application" },
+      { name: "空域计算", icon: "monitor-one", widget: "airspace-computation" }
+    ]
+  },
+  {
     name: "业务",
     icon: "layers",
     children: [

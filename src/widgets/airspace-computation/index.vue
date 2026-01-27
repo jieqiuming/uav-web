@@ -93,7 +93,7 @@ import { message } from "ant-design-vue"
 import type { AlgorithmInfo, AlgorithmCategory } from "./types"
 
 // Widget状态管理
-const { isActivate } = useWidget()
+const { isActivate, activate } = useWidget()
 
 // 搜索和筛选状态
 const selectedCategory = ref<string>("all")
@@ -248,7 +248,7 @@ const selectAlgorithm = (algorithm: AlgorithmInfo) => {
   // message.success(`已选择算法: ${algorithm.name}`)
   
   // 跳转到空域申请模块并携带数据
-  isActivate({
+  activate({
     name: "airspace-application",
     data: {
       action: "add_task",

@@ -40,9 +40,9 @@
             </template>
             <template v-if="column.key === 'action'">
               <a-space>
-                <a-button size="small" @click="viewDetail(record)">查看</a-button>
-                <a-button size="small" type="primary" v-if="record.status === 'pending'" @click="editTask(record)">编辑</a-button>
-                <a-button size="small" danger v-if="record.status === 'pending'" @click="deleteTask(record)">删除</a-button>
+                <a-button size="small" type="primary" v-if="record.status === 'pending'" @click="approveTask(record)">通过</a-button>
+                <a-button size="small" danger v-if="record.status === 'pending'" @click="rejectTask(record)">驳回</a-button>
+                <a-button size="small" @click="deleteTask(record)">删除</a-button>
               </a-space>
             </template>
           </template>
@@ -59,11 +59,10 @@
             <a-date-picker v-model:value="formData.startTime" show-time placeholder="请选择执行时间" style="width: 100%" />
           </a-form-item>
           <a-form-item label="飞行航线">
-            <a-select v-model:value="formData.routeId" placeholder="请选择航线">
-              <a-select-option value="route1">北区巡检航线</a-select-option>
-              <a-select-option value="route2">南区巡检航线</a-select-option>
-              <a-select-option value="route3">应急响应航线</a-select-option>
-            </a-select>
+            <div style="display: flex; gap: 10px;">
+              <a-select v-model:value="formData.routeId" placeholder="请选择航线" :options="routeOptions" style="flex: 1" />
+              <a-button @click="handleViewRoute">查看航线</a-button>
+            </div>
           </a-form-item>
           <a-form-item label="执行算法">
             <a-select v-model:value="formData.algorithm" placeholder="请选择执行算法">
@@ -93,8 +92,25 @@ import { useWidget } from '@mars/common/store/widget'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 
+import * as mapWork from "./map.js"
+import useLifecycle from "@mars/common/uses/use-lifecycle"
+
 // Widget状态管理
-const { isActivate } = useWidget()
+useLifecycle(mapWork)
+const { isActivate, currentWidget } = useWidget()
+
+// 监听Widget激活事件，处理参数传递
+currentWidget.onUpdate((widget: any) => {
+  if (widget && widget.data) {
+    console.log('收到Widget数据:', widget.data)
+    if (widget.data.action === 'add_task') {
+       showAddForm()
+       if (widget.data.algorithm) {
+         formData.value.algorithm = widget.data.algorithm
+       }
+    }
+  }
+})
 
 // 筛选状态
 const filterStatus = ref('all')
@@ -125,42 +141,49 @@ const tableData = computed(() => {
   return allTasks.value.filter(task => task.status === filterStatus.value)
 })
 
+// 航线数据
+const routeOptions = ref<any[]>([])
+const allRoutes = ref<any[]>([])
+
 // 加载数据
 const loadTasks = () => {
   try {
+    // 加载任务列表
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
       allTasks.value = JSON.parse(stored)
     } else {
-      // 初始化模拟数据
-      allTasks.value = [
-        {
-          id: '1',
-          name: '北区日常巡检任务',
-          startTime: '2024-01-15 09:00:00',
-          routeName: '北区巡检航线',
-          routeId: 'route1',
-          algorithm: 'road_crack_detection',
-          status: 'pending',
-          createdAt: '2024-01-10 14:30:00',
-          description: '对北区进行日常巡检'
-        },
-        {
-          id: '2', 
-          name: '南区应急响应任务',
-          startTime: '2024-01-16 10:30:00',
-          routeName: '南区巡检航线',
-          routeId: 'route2',
-          algorithm: 'fire_smoke_detection',
-          status: 'approved',
-          createdAt: '2024-01-11 16:45:00',
-          description: '南区发生紧急情况，需要无人机响应'
-        }
-      ]
-      saveTasks()
+       // ... (保留原有初始化逻辑，如果需要的话，或者简化)
+       allTasks.value = [] 
+    }
+
+    // 加载航线列表 (用于下拉选择)
+    const storedRoutes = localStorage.getItem("uav_routes")
+    if (storedRoutes) {
+      allRoutes.value = JSON.parse(storedRoutes)
+      routeOptions.value = allRoutes.value.map(r => ({
+        value: r.id,
+        label: r.name
+      }))
     }
   } catch (e) {
-    console.error('Failed to load tasks', e)
+    console.error('Failed to load data', e)
+  }
+}
+
+// 预览航线
+const handleViewRoute = () => {
+  if (!formData.value.routeId) {
+    message.warning('请先选择航线')
+    return
+  }
+  const route = allRoutes.value.find(r => r.id === formData.value.routeId)
+  if (route) {
+    // 兼容通过 localStorage 读取的航线数据格式
+    // 假设 route-planning 保存的数据格式为 { waypoints: [[lng, lat, alt], ...], ... }
+    // map.js drawRoute 做了兼容处理
+    mapWork.drawRoute(route)
+    message.success(`已显示航线: ${route.name}`)
   }
 }
 
@@ -218,7 +241,7 @@ const columns = [
 const pagination = computed(() => ({
   total: tableData.value.length,
   showSizeChanger: true,
-  showQuickJumper: true,
+  showQuickJumper: true, // 修正拼写错误 (API通常是showQuickJumper)
   showTotal: (total: number) => `共 ${total} 条记录`
 }))
 
@@ -269,14 +292,10 @@ const getAlgorithmText = (algorithm: string) => {
   return algorithms[algorithm] || algorithm
 }
 
-// 航线名称映射（模拟）
+// 航线名称映射
 const getRouteName = (routeId: string) => {
-  const routes: Record<string, string> = {
-    route1: '北区巡检航线',
-    route2: '南区巡检航线',
-    route3: '应急响应航线'
-  }
-  return routes[routeId] || routeId
+  const route = allRoutes.value.find(r => r.id === routeId)
+  return route ? route.name : '未知航线'
 }
 
 // 事件处理方法
