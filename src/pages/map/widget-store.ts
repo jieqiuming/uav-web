@@ -137,7 +137,7 @@ const store: StoreOptions<WidgetState> = {
       {
         // 空域计算
         component: markRaw(defineAsyncComponent(() => import("@mars/widgets/airspace-computation/index.vue"))),
-        name: "airspace-computation", 
+        name: "airspace-computation",
         group: "airspace"
       },
       {
@@ -151,6 +151,18 @@ const store: StoreOptions<WidgetState> = {
         component: markRaw(defineAsyncComponent(() => import("@mars/widgets/auto-route-planning/index.vue"))),
         name: "auto-route-planning",
         group: "route"
+      },
+      {
+        // 任务管理
+        component: markRaw(defineAsyncComponent(() => import("@mars/widgets/task-management/index.vue"))),
+        name: "task-management",
+        group: "system"
+      },
+      {
+        // 设备管理
+        component: markRaw(defineAsyncComponent(() => import("@mars/widgets/device-management/index.vue"))),
+        name: "device-management",
+        group: "system"
       }
     ],
     openAtStart: ["toolbar", "query-poi"]

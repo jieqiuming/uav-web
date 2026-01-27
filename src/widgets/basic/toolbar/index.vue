@@ -78,6 +78,7 @@ const data: any = [
     icon: "layers",
     children: [
       { name: "飞机管理", icon: "config", widget: "aircraft-management" },
+      { name: "设备管理", icon: "components", widget: "device-management" },
       { name: "航线规划", icon: "move", widget: "route-planning" },
       { name: "任务管理", icon: "editor", widget: "task-management" }
     ]

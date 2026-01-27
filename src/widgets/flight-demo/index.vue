@@ -95,7 +95,21 @@ import { useWidget } from "@mars/common/store/widget"
 
 // 启用map.ts生命周期
 useLifecycle(mapWork)
-const { currentWidget } = useWidget()
+// Widget状态管理
+const { activate, currentWidget } = useWidget()
+
+// 监听Widget激活事件，处理参数传递 (如从任务管理跳转过来)
+currentWidget.onUpdate((widget: any) => {
+  if (widget && widget.data) {
+    if (widget.data.route) {
+       console.log('接收到飞行任务数据:', widget.data)
+       // 延迟一点为了确保地图加载完成
+       setTimeout(() => {
+         mapWork.updateRoutePaths(widget.data.route)
+       }, 500)
+    }
+  }
+})
 
 onMounted(() => {
   if (mapWork.fixedRoute?.info) {

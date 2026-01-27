@@ -15,8 +15,30 @@ import type {
 // 模拟API延迟
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-// 模拟数据存储
-const mockAircraftData: AircraftModel[] = [
+const STORAGE_KEY = "uav_aircrafts"
+
+// 从本地存储加载数据
+const loadFromStorage = (): AircraftModel[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch (e) {
+    console.error("加载机型数据失败", e)
+    return []
+  }
+}
+
+// 保存数据到本地存储
+const saveToStorage = (data: AircraftModel[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch (e) {
+    console.error("保存机型数据失败", e)
+  }
+}
+
+// 模拟数据存储 (初始默认数据)
+const defaultAircraftData: AircraftModel[] = [
   {
     id: 1,
     modelName: "DJI Mini 3 Pro",
@@ -430,6 +452,13 @@ const mockAircraftData: AircraftModel[] = [
   }
 ]
 
+// 初始化数据：优先从 storage 读取，如果没有则使用默认数据
+let mockAircraftData: AircraftModel[] = loadFromStorage()
+if (mockAircraftData.length === 0) {
+  mockAircraftData = [...defaultAircraftData]
+  saveToStorage(mockAircraftData)
+}
+
 let nextId = 14
 
 /**
@@ -526,6 +555,7 @@ export async function createAircraft(data: CreateAircraftDTO): Promise<ApiRespon
   }
 
   mockAircraftData.unshift(newAircraft)
+  saveToStorage(mockAircraftData)
 
   return {
     code: 200,
@@ -560,6 +590,7 @@ export async function updateAircraft(id: number, data: UpdateAircraftDTO): Promi
   }
 
   mockAircraftData[index] = updatedAircraft
+  saveToStorage(mockAircraftData)
 
   return {
     code: 200,
@@ -583,6 +614,7 @@ export async function deleteAircraft(id: number): Promise<ApiResponse<void>> {
   }
 
   mockAircraftData.splice(index, 1)
+  saveToStorage(mockAircraftData)
 
   return {
     code: 200,
@@ -607,6 +639,7 @@ export async function updateAircraftStatus(id: number, status: number): Promise<
 
   aircraft.status = status
   aircraft.updatedAt = new Date().toISOString()
+  saveToStorage(mockAircraftData)
 
   return {
     code: 200,
@@ -690,6 +723,8 @@ export async function batchDeleteAircraft(ids: number[]): Promise<ApiResponse<vo
     }
   })
 
+  saveToStorage(mockAircraftData)
+
   return {
     code: 200,
     message: `成功删除 ${ids.length} 个机型`,
@@ -712,6 +747,8 @@ export async function batchUpdateAircraftStatus(ids: number[], status: number): 
       aircraft.updatedAt = new Date().toISOString()
     }
   })
+
+  saveToStorage(mockAircraftData)
 
   return {
     code: 200,

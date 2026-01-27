@@ -72,16 +72,20 @@ import * as mapWork from "./map.js"
 import useLifecycle from "@mars/common/uses/use-lifecycle"
 import { useWidget } from "@mars/common/store/widget"
 import { message } from "ant-design-vue"
-import * as aircraftApi from "../aircraft-management/api/aircraft"
+import dayjs from "dayjs"
+import * as aircraftApi from "@mars/widgets/aircraft-management/api/aircraft"
 
 useLifecycle(mapWork)
 const { activate } = useWidget()
 
 // 状态定义
-const taskList = ref([])
+const taskList = ref<any[]>([])
 const isModalVisible = ref(false)
-const aircraftOptions = ref([])
-const routeOptions = ref([])
+const aircraftOptions = ref<any[]>([])
+const routeOptions = ref<any[]>([])
+
+// 本地存储Key
+const STORAGE_KEY = "uav_tasks"
 
 const formState = reactive({
   name: "",
@@ -98,98 +102,122 @@ const columns = [
   { title: "操作", key: "action", slots: { customRender: "action" }, width: 150 }
 ]
 
-onMounted(() => {
-  loadTasks()
-  loadOptions()
-})
-
-const loadTasks = () => {
-  const tasks = JSON.parse(localStorage.getItem("uav_tasks") || "[]")
-  taskList.value = tasks
-}
-
-const loadOptions = async () => {
-  // 加载机型
+// 加载数据 (机型、航线、任务)
+const loadData = async () => {
+  // 1. 加载机型 (通过API确保数据初始化)
   try {
     const res = await aircraftApi.getActiveAircraftOptions()
-    aircraftOptions.value = res.data.map(item => ({
-      label: `${item.label} (${item.modelCode})`,
-      value: item.value
-    }))
+    if (res && res.data) {
+       aircraftOptions.value = res.data
+    }
   } catch (e) {
     console.error("加载机型失败", e)
   }
 
-  // 加载航线 (从localStorage)
-  const routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
-  routeOptions.value = routes.map(route => ({
-    label: route.name,
-    value: route.id,
-    routeData: route // 保存完整数据备用
-  }))
+  // 2. 加载航线
+  try {
+    const routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
+    routeOptions.value = routes.map((r: any) => ({
+      value: r.id,
+      label: r.name,
+      origin: r
+    }))
+  } catch (e) {
+    console.error("加载航线失败", e)
+  }
+
+  // 3. 加载任务
+  loadTasks()
+}
+
+const loadTasks = () => {
+   try {
+    const tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")
+    taskList.value = tasks
+  } catch (e) {
+    console.error("加载任务列表失败", e)
+  }
+}
+
+const saveTasks = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(taskList.value))
 }
 
 const showCreateModal = () => {
+  isModalVisible.value = true
+  // 重置表单
   formState.name = ""
   formState.aircraftId = undefined
   formState.routeId = undefined
   formState.description = ""
-  isModalVisible.value = true
 }
 
 const handleCreate = () => {
-  const newTask = {
-    id: Date.now(),
-    name: formState.name,
-    aircraftId: formState.aircraftId,
-    routeId: formState.routeId,
-    description: formState.description,
-    createdAt: new Date().toLocaleString(),
-    status: "pending",
-    // 冗余存储名称，方便显示
-    aircraftName: aircraftOptions.value.find(o => o.value === formState.aircraftId)?.label,
-    routeName: routeOptions.value.find(o => o.value === formState.routeId)?.label
+  if (!formState.name || !formState.aircraftId || !formState.routeId) {
+    message.error("请填写完整信息")
+    return
   }
 
-  const tasks = JSON.parse(localStorage.getItem("uav_tasks") || "[]")
-  tasks.unshift(newTask)
-  localStorage.setItem("uav_tasks", JSON.stringify(tasks))
+  // 获取关联名称
+  const aircraft = aircraftOptions.value.find(a => a.value === formState.aircraftId)
+  const route = routeOptions.value.find(r => r.value === formState.routeId)
+
+  const newTask = {
+    id: Date.now().toString(),
+    name: formState.name,
+    aircraftId: formState.aircraftId,
+    aircraftName: aircraft?.label || "未知机型",
+    routeId: formState.routeId,
+    routeName: route?.label || "未知航线",
+    description: formState.description,
+    createdAt: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+    status: "pending"
+  }
+
+  taskList.value.unshift(newTask)
+  saveTasks()
   
   message.success("任务创建成功")
   isModalVisible.value = false
-  loadTasks()
 }
 
-const deleteTask = (id: number) => {
-  const tasks = JSON.parse(localStorage.getItem("uav_tasks") || "[]")
-  const newTasks = tasks.filter((t: any) => t.id !== id)
-  localStorage.setItem("uav_tasks", JSON.stringify(newTasks))
-  loadTasks()
-  message.success("删除成功")
-}
-
-const executeTask = (task: any) => {
-  const routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
-  const route = routes.find((r: any) => r.id === task.routeId)
+const executeTask = (record: any) => {
+  message.loading("正在启动飞行任务...", 1)
+  
+  // 获取完整的航线数据
+  const route = routeOptions.value.find(r => r.value === record.routeId)?.origin
   
   if (!route) {
-    message.error("关联的航线数据不存在")
+    message.error("关联的航线数据已丢失，无法执行")
     return
   }
-  
-  // 激活仿真演示插件，并传入航线数据
-  if ((window as any).mars3d) { 
-     const { activate, updateWidget } = useWidget()
-     activate("flight-demo")
-     setTimeout(() => {
-        updateWidget("flight-demo", { routeData: route, aircraftId: task.aircraftId })
-     }, 100)
-     message.success(`任务启动：${task.name}`)
-  } else {
-     message.warning("未检测到地图环境")
-  }
+
+  // 补全机型名称到航线数据中(用于显示)
+  route.aircraftName = record.aircraftName
+
+  // 跳转到飞行演示模块
+  activate({
+    name: "flight-demo",
+    data: {
+      action: "start_task",
+      route: route,
+      taskId: record.id
+    }
+  })
 }
+
+const deleteTask = (id: string) => {
+  taskList.value = taskList.value.filter(t => t.id !== id)
+  saveTasks()
+  message.success("任务删除成功")
+}
+
+onMounted(() => {
+  loadData()
+})
 </script>
+
+
 
 <style scoped lang="less">
 .task-management {
