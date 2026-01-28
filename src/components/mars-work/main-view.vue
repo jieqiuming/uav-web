@@ -18,6 +18,9 @@
 
       <!-- 大屏模式：Dashboard 布局 -->
       <dashboard-layout v-if="viewMode === 'dashboard'" @exit="setViewMode('standard')" />
+      
+      <!-- 移动端专属：快捷操作浮窗 -->
+      <mobile-quick-actions />
     </div>
   </ConfigProvider>
 </template>
@@ -35,7 +38,8 @@ import { useWidgetStore } from "@mars/common/store/widget"
 import MarsMap from "@mars/components/mars-work/mars-map.vue"
 import MarsWidget from "./widget.vue"
 import TopBar from "@mars/components/system-menu/top-bar.vue"
-import DashboardLayout from "./dashboard-layout.vue" // 新增
+import DashboardLayout from "./dashboard-layout.vue"
+import MobileQuickActions from "./mobile-quick-actions.vue" // 新增
 import { logInfo } from "@mars/utils/mars-util"
 
 const locale = zhCN
@@ -68,6 +72,25 @@ const loaded = ref(false)
 const marsOnload = (map: any) => {
   logInfo("map构造完成", map)
   mapInstance = map
+
+  // 移动端交互优化
+  if (window.innerWidth <= 768) {
+    console.log("检测到移动端，正在优化地图手势...")
+    const controller = map.scene.screenSpaceCameraController
+    
+    // 降低缩放灵敏度 (默认为 5.0)，避免双指一捏就飞太远
+    controller.zoomFactor = 2.0
+    
+    // 增加惯性，手感更顺滑
+    // controller.inertiaTranslate = 0.9;
+    // controller.inertiaZoom = 0.9;
+    
+    // 限制最小最大缩放距离，防止视角穿模或迷失
+    controller.minimumZoomDistance = 50
+    
+    // 确保开启倾斜 (默认是开启的，但明确一下)
+    controller.enableTilt = true
+  }
 
   emit("mapLoaded", mapInstance)
   loaded.value = true

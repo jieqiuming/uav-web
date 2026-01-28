@@ -39,11 +39,11 @@
             </div>
             <div class="sub-menu-item" @click="handleSubMenuClick('manual-route')">
               <mars-icon icon="clothes-gloves" width="20"></mars-icon>
-              <span>手动航线规划</span>
+              <span>手动规划</span>
             </div>
             <div class="sub-menu-item" @click="handleSubMenuClick('auto-route')">
               <mars-icon icon="assembly-line" width="20"></mars-icon>
-              <span>自动航线规划</span>
+              <span>自动规划</span>
             </div>
           </div>
         </div>
