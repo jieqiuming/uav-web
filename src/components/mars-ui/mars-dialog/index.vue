@@ -863,4 +863,43 @@ export default {
   -webkit-animation-name: fadeInCenter;
   animation-name: fadeInCenter;
 }
+
+/* 移动端适配样式 (max-width: 768px) */
+@media (max-width: 768px) {
+  /* 使用 :not 排除不需要全屏显示的特殊组件 (工具栏、搜索框) */
+  .mars-dialog:not(.base-pannel):not(.query-poi-pannel) {
+    left: 10px !important;
+    right: 10px !important;
+    top: 70px !important; /* TopBar is 60px on mobile */
+    bottom: 20px !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    transform: none !important;
+  }
+
+  /* 通用调整：移动端隐藏缩放手柄 */
+  .mars-dialog__handle {
+    display: none !important;
+  }
+
+  /* 通用调整：移动端禁用头部拖拽 */
+  .mars-dialog__header {
+    cursor: default !important;
+  }
+
+  /* 调整缩略图位置 */
+  .mars-dialog-thumb {
+    right: 10px !important;
+    bottom: 100px !important;
+    left: auto !important;
+    top: auto !important;
+  }
+
+  /* 调整内部内容滚动区域 */
+  .mars-dialog__content {
+    padding: 10px;
+  }
+}
 </style>

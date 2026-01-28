@@ -64,6 +64,7 @@
         :loading="loading"
         :row-selection="rowSelection"
         row-key="id"
+        :scroll="{ x: 1300 }" 
         @change="handleTableChange"
       >
         <!-- 图片列自定义渲染 -->
@@ -399,6 +400,8 @@ const handleFormSuccess = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 10px; /* 增加 gap 处理换行后的间距 */
     margin-bottom: 16px;
     padding: 16px;
     background: var(--mars-control-bg);
@@ -408,6 +411,7 @@ const handleFormSuccess = () => {
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .action-controls {
@@ -416,13 +420,35 @@ const handleFormSuccess = () => {
     }
   }
 
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    .aircraft-toolbar {
+       flex-direction: column;
+       align-items: stretch;
+       
+       .search-controls {
+         width: 100%;
+         .mars-input {
+           width: 100% !important; /* 强制搜索框满宽 */
+         }
+       }
+       
+       .action-controls {
+         justify-content: space-between;
+         margin-top: 10px;
+       }
+    }
+  }
+
   .stats-panel {
     display: flex;
     gap: 16px;
     margin-bottom: 16px;
+    flex-wrap: wrap; /* 允许换行 */
     
     .stat-item {
       flex: 1;
+      min-width: 100px; /* 防止无限缩小 */
       background: var(--mars-control-bg);
       padding: 16px;
       border-radius: 4px;

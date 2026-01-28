@@ -1,8 +1,13 @@
 <template>
   <div class="top-bar">
     <div class="top-bar-content">
-      <!-- 左侧菜单 -->
-      <div class="menu-section left-menu">
+      <!-- 汉堡菜单按钮 (仅移动端显示) -->
+      <div class="hamburger-btn" @click="toggleMobileMenu">
+        <mars-icon :icon="showMobileMenu ? 'close' : 'hamburger-button'" width="30"></mars-icon>
+      </div>
+
+      <!-- 桌面端左侧菜单 -->
+      <div class="menu-section left-menu desktop-menu">
         <!-- 设备清单下拉菜单 -->
         <div class="custom-dropdown" @mouseenter="showDeviceDropdown = true" @mouseleave="showDeviceDropdown = false">
           <div class="menu-item" :class="{ active: isDeviceActive }">
@@ -47,24 +52,60 @@
       <!-- 中间标题 -->
       <div class="title">无为低空云平台</div>
       
-      <!-- 右侧菜单 -->
-      <div class="menu-section right-menu">
-        <!-- 空域申请 -->
-        <div class="menu-item" :class="{ active: isAirspaceApplicationActive }" @click="handleMenuClick('airspace-application')">
-          <mars-icon icon="file-text" width="25"></mars-icon>
-          <span>空域申请</span>
+      <!-- 桌面端右侧菜单 -->
+      <div class="menu-section right-menu desktop-menu">
+        <!-- 业务管理下拉菜单 (合并项) -->
+        <div class="custom-dropdown" @mouseenter="showBusinessDropdown = true" @mouseleave="showBusinessDropdown = false">
+          <div class="menu-item" :class="{ active: isBusinessActive }">
+            <mars-icon icon="briefcase" width="25"></mars-icon>
+            <span>业务管理</span>
+          </div>
+          <div v-show="showBusinessDropdown" class="custom-dropdown-menu">
+            <div class="sub-menu-item" @click="handleSubMenuClick('airspace-application')">
+              <mars-icon icon="file-text" width="20"></mars-icon>
+              <span>空域申请</span>
+            </div>
+            <div class="sub-menu-item" @click="handleSubMenuClick('airspace-calculation')">
+              <mars-icon icon="calculator" width="20"></mars-icon>
+              <span>空域计算</span>
+            </div>
+            <div class="sub-menu-item" @click="handleSubMenuClick('flight-report')">
+              <mars-icon icon="file-text-one" width="20"></mars-icon>
+              <span>飞行报告</span>
+            </div>
+          </div>
         </div>
 
-        <!-- 空域计算 -->
-        <div class="menu-item" :class="{ active: isAirspaceComputationActive }" @click="handleMenuClick('airspace-calculation')">
-          <mars-icon icon="calculator" width="25"></mars-icon>
-          <span>空域计算</span>
+        <!-- 指挥大屏 -->
+        <div class="menu-item dashboard-btn" @click="handleMenuClick('dashboard')">
+          <mars-icon icon="monitor" width="25"></mars-icon>
+          <span>指挥大屏</span>
         </div>
+      </div>
 
-        <!-- 飞行报告 -->
-        <div class="menu-item" :class="{ active: isFlightReportActive }" @click="handleMenuClick('flight-report')">
-          <mars-icon icon="file-text-one" width="25"></mars-icon>
-          <span>飞行报告</span>
+      <!-- 移动端侧滑菜单 -->
+      <div class="mobile-menu-drawer" :class="{ open: showMobileMenu }">
+        <div class="drawer-content">
+          <div class="mobile-menu-group">
+            <div class="group-title">设备管理</div>
+            <div class="mobile-menu-item" @click="handleSubMenuClick('personal-device')">个人设备</div>
+            <div class="mobile-menu-item" @click="handleSubMenuClick('public-device')">公有设备</div>
+          </div>
+          <div class="mobile-menu-group">
+            <div class="group-title">航线规划</div>
+            <div class="mobile-menu-item" @click="handleSubMenuClick('route-management')">航线管理</div>
+            <div class="mobile-menu-item" @click="handleSubMenuClick('manual-route')">手动规划</div>
+            <div class="mobile-menu-item" @click="handleSubMenuClick('auto-route')">自动规划</div>
+          </div>
+          <div class="mobile-menu-group">
+             <div class="group-title">业务功能</div>
+             <div class="mobile-menu-item" @click="handleMenuClick('airspace-application')">空域申请</div>
+             <div class="mobile-menu-item" @click="handleMenuClick('airspace-calculation')">空域计算</div>
+             <div class="mobile-menu-item" @click="handleMenuClick('flight-report')">飞行报告</div>
+          </div>
+          <div class="mobile-menu-group">
+             <div class="mobile-menu-item highlight" @click="handleMenuClick('dashboard')">切换到指挥大屏</div>
+          </div>
         </div>
       </div>
     </div>
@@ -72,12 +113,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, inject } from "vue"
 import { message } from "ant-design-vue"
 import { useWidget } from "@mars/common/store/widget"
 
 // 顶部栏组件
 const { activate, disable, isActivate } = useWidget()
+const setViewMode = inject<((mode: string) => void)>("setViewMode")
 
 // 响应式状态，跟踪菜单激活状态
 const menuStates = ref({
@@ -87,6 +129,12 @@ const menuStates = ref({
 // 控制下拉菜单显示
 const showDeviceDropdown = ref(false)
 const showRouteDropdown = ref(false)
+const showBusinessDropdown = ref(false) // 新增
+const showMobileMenu = ref(false)
+
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value
+}
 
 // 计算属性，实时获取widget状态
 // 设备清单菜单激活状态（如果有任何子项激活则高亮）
@@ -100,24 +148,17 @@ const isRouteActive = computed(() => {
   return isActivate("route-management") || isActivate("route-planning")
 })
 
-// 空域申请菜单激活状态
-const isAirspaceApplicationActive = computed(() => {
-  return isActivate("airspace-application")
-})
-
-// 空域计算菜单激活状态
-const isAirspaceComputationActive = computed(() => {
-  return isActivate("airspace-computation")
-})
-
-// 飞行报告菜单激活状态
-const isFlightReportActive = computed(() => {
-  return isActivate("flight-report")
+// 业务管理菜单激活状态 (合并后的)
+const isBusinessActive = computed(() => {
+  return isActivate("airspace-application") || 
+         isActivate("airspace-computation") || 
+         isActivate("flight-report")
 })
 
 // 菜单点击处理函数
 const handleMenuClick = (menuType: string) => {
   console.log("点击菜单:", menuType)
+  showMobileMenu.value = false
   
   switch (menuType) {
     case "airspace-application":
@@ -132,6 +173,12 @@ const handleMenuClick = (menuType: string) => {
       console.log("点击飞行报告")
       activate({ name: "flight-report" })
       break
+    case "dashboard":
+      console.log("切换到指挥大屏")
+      if (setViewMode) {
+        setViewMode("dashboard")
+      }
+      break
     default:
       console.log("未知菜单类型:", menuType)
   }
@@ -141,9 +188,11 @@ const handleMenuClick = (menuType: string) => {
 const handleSubMenuClick = (subMenuType: string) => {
   console.log("点击子菜单:", subMenuType)
   
-  // 点击子菜单项后关闭相关下拉菜单
+  // 点击子菜单项后关闭相关下拉菜单和移动端菜单
   showDeviceDropdown.value = false
   showRouteDropdown.value = false
+  showBusinessDropdown.value = false
+  showMobileMenu.value = false
   
   switch (subMenuType) {
     // 设备清单子菜单
@@ -168,6 +217,17 @@ const handleSubMenuClick = (subMenuType: string) => {
     case "auto-route":
       console.log("点击自动航线规划")
       activate({ name: "auto-route-planning" })
+      break
+      
+    // 业务管理子菜单
+    case "airspace-application":
+      activate({ name: "airspace-application" })
+      break
+    case "airspace-calculation":
+      activate({ name: "airspace-computation" })
+      break
+    case "flight-report":
+      activate({ name: "flight-report" })
       break
     
     default:
@@ -266,8 +326,8 @@ const handleSubMenuClick = (subMenuType: string) => {
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
-  padding: 8px 15px;
-  min-width: 140px;
+  padding: 8px 25px; /* 增加内底距 */
+  min-width: auto; /* 移除固定宽度，改为自适应 */
   height: 45px;
   display: flex;
   align-items: center;
@@ -277,19 +337,24 @@ const handleSubMenuClick = (subMenuType: string) => {
   transition: all 0.3s ease;
 }
 
-/* 左侧菜单项 - 增大宽度 */
-.left-menu .menu-item,
-.left-menu .custom-dropdown {
-  min-width: 320px;
-  padding: 8px 28px;
-  flex: 1;
+/* 自适应并防止过窄 */
+.menu-section .menu-item,
+.menu-section .custom-dropdown {
+  min-width: auto;
+  padding: 0; /* padding 由内部 menu-item 控制，或在 dropdown 上处理 */
+  flex: 0 0 auto;
 }
 
-/* 右侧菜单项 - 与左侧平衡 */
+/* 修正 custom-dropdown 的布局 */
+.menu-section .custom-dropdown .menu-item {
+     padding: 8px 35px; /* 稍微宽一点 */
+}
+
+/* 右侧菜单项 - 自适应 */
 .right-menu .menu-item {
-  min-width: 180px;
-  padding: 8px 18px;
-  flex: 1;
+  min-width: auto;
+  padding: 8px 25px;
+  flex: 0 0 auto;
 }
 
 .menu-item > * {
@@ -318,6 +383,20 @@ const handleSubMenuClick = (subMenuType: string) => {
 .menu-item.active .mars-icon {
   color: #00ffff;
   filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+}
+
+.dashboard-btn {
+  border: 1px solid #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.dashboard-btn span, 
+.dashboard-btn .mars-icon {
+  color: #ffd700 !important;
+}
+
+.dashboard-btn:hover {
+  background: rgba(255, 215, 0, 0.1);
 }
 
 .menu-item span {
@@ -528,6 +607,92 @@ const handleSubMenuClick = (subMenuType: string) => {
   
   .sub-menu-item span {
     font-size: 16px;
+  }
+}
+
+/* 汉堡菜单样式 */
+.hamburger-btn {
+  display: none; // 默认隐藏
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10002;
+  cursor: pointer;
+  color: #fff;
+}
+
+.mobile-menu-drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 280px;
+  height: 100vh;
+  background: rgba(10, 20, 40, 0.95);
+  backdrop-filter: blur(20px);
+  z-index: 10000;
+  transition: left 0.3s ease;
+  padding-top: 80px; /* 给顶部工具栏留位置 */
+  box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+  
+  &.open {
+    left: 0;
+  }
+  
+  .drawer-content {
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+  }
+  
+  .mobile-menu-group {
+    margin-bottom: 25px;
+    
+    .group-title {
+      font-size: 14px;
+      color: #00c1de;
+      margin-bottom: 10px;
+      font-weight: bold;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .mobile-menu-item {
+      padding: 12px 10px;
+      color: #ddd;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.2s;
+      
+      &:hover {
+         background: rgba(255,255,255,0.1);
+         color: #fff;
+      }
+
+      &.highlight {
+        color: #ffd700;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+/* 屏幕宽度小于 1024px 时启用汉堡菜单 */
+@media (max-width: 1024px) {
+  .desktop-menu {
+    display: none !important; // 隐藏桌面端菜单
+  }
+  
+  .hamburger-btn {
+    display: block; // 显示汉堡按钮
+  }
+  
+  .title {
+    font-size: 32px;
+    min-width: auto;
+    width: 100%;
+    padding-left: 60px; // 防止被汉堡按钮遮挡
   }
 }
 </style>

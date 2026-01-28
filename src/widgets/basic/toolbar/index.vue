@@ -200,4 +200,54 @@ const clickMenu = ({ key }: any, index: number) => {
     color: #ffffff;
   }
 }
+
+/* 移动端适配：垂直排列工具栏 */
+@media (max-width: 768px) {
+  .base-pannel {
+    right: 10px !important;
+    left: auto !important;
+    top: 120px !important; /* 放置在搜索按钮(70px+40px=110px)下方 */
+    bottom: auto !important;
+    width: 44px !important; /* 窄条宽度 */
+    height: auto !important;
+    border-radius: 4px !important;
+    
+    .mars-dialog__content {
+      height: auto !important;
+      display: flex;
+      flex-direction: column !important; /* 垂直排列 */
+      justify-content: flex-start;
+      border: 1px solid var(--mars-base-border) !important;
+      background-color: var(--mars-bg-base) !important;
+      border-radius: 4px;
+    }
+
+    .toolbar-item {
+      flex: none;
+      width: 100% !important;
+      height: 44px; /* 每个按钮高度 */
+      flex-direction: column;
+      justify-content: center;
+      padding: 0;
+      border-radius: 0 !important;
+      
+      /* 分割线 */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .mars-icon {
+        margin-bottom: 0;
+        width: 20px !important;
+        height: 20px !important;
+      }
+      
+      /* 移动端垂直模式下隐藏文字，只留图标，更简洁 */
+      .title {
+        display: none; 
+      }
+    }
+  }
+}
 </style>

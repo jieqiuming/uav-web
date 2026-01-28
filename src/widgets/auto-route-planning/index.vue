@@ -7,28 +7,28 @@
           <div class="tab-content">
             <a-row :gutter="16">
               <!-- 左侧参数设置 -->
-              <a-col :span="8">
+              <a-col :xs="24" :md="8">
                 <a-card title="北斗网格参数" size="small" class="form-card">
                   <a-form layout="vertical">
                     <a-row :gutter="8">
-                      <a-col :span="12">
+                      <a-col :xs="24" :sm="12">
                         <a-form-item label="最小经度">
                           <a-input-number v-model:value="params.minLon" :step="0.001" style="width: 100%" />
                         </a-form-item>
                       </a-col>
-                      <a-col :span="12">
+                      <a-col :xs="24" :sm="12">
                         <a-form-item label="最大经度">
                           <a-input-number v-model:value="params.maxLon" :step="0.001" style="width: 100%" />
                         </a-form-item>
                       </a-col>
                     </a-row>
                     <a-row :gutter="8">
-                      <a-col :span="12">
+                      <a-col :xs="24" :sm="12">
                         <a-form-item label="最小纬度">
                           <a-input-number v-model:value="params.minLat" :step="0.001" style="width: 100%" />
                         </a-form-item>
                       </a-col>
-                      <a-col :span="12">
+                      <a-col :xs="24" :sm="12">
                         <a-form-item label="最大纬度">
                           <a-input-number v-model:value="params.maxLat" :step="0.001" style="width: 100%" />
                         </a-form-item>
@@ -63,7 +63,7 @@
               </a-col>
               
               <!-- 右侧展示 -->
-              <a-col :span="16">
+              <a-col :xs="24" :md="16">
                 <a-card title="网格状态" size="small" class="info-card">
                   <div v-if="gridGenerated">
                     <a-result status="success" title="网格已成功渲染">
@@ -94,7 +94,7 @@
         <a-tab-pane key="smart" tab="智能避障规划">
           <div class="tab-content">
             <a-row :gutter="16">
-              <a-col :span="8">
+              <a-col :xs="24" :md="8">
                 <a-card title="避障参数设置" size="small" class="form-card">
                   <a-form layout="vertical">
                     <a-divider orientation="left" plain>航点设置</a-divider>
@@ -137,7 +137,7 @@
                 </a-card>
               </a-col>
               
-              <a-col :span="16">
+              <a-col :xs="24" :md="16">
                 <a-card title="避障分析结果" size="small" class="info-card">
                   <div v-if="smartPlanningResult" style="padding: 20px;">
                     <a-alert message="规划成功" type="success" show-icon />
@@ -392,7 +392,7 @@ const createGridPrimitive = (data: any) => {
     indices: new Uint32Array(data.indices),
     primitiveType: mars3d.Cesium.PrimitiveType.LINES,
     boundingSphere: mars3d.Cesium.BoundingSphere.fromPoints(data.positions)
-  })
+  } as any)
   
   return new mars3d.Cesium.Primitive({
     geometryInstances: new mars3d.Cesium.GeometryInstance({

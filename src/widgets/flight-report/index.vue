@@ -45,6 +45,7 @@
           :pagination="pagination"
           :loading="tableLoading"
           rowKey="id"
+          :scroll="{ x: 1300 }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'algorithm'">

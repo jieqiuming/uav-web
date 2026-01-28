@@ -170,86 +170,9 @@
     },
     {
       "pid": 70,
-      "type": "3dtiles",
-      "name": "中试谷三维模型",
-      "url": "http://10.101.240.60/uav-web/data/zhongshigu-3dtiles/tileset.json",
-      "center": {
-        "lat": 29.76433,
-        "lng": 113.913188,
-        "alt": 1935.6,
-        "heading": 359.2,
-        "pitch": -33
-      },
-      "maximumScreenSpaceError": 32,
-      "maximumMemoryUsage": 4096,
-      "progressiveResolutionHeightFraction": 0.5,
-      "loadSiblings": true,
-      "cullRequestsWhileMoving": true,
-      "cullRequestsWhileMovingMultiplier": 5,
-      "dynamicScreenSpaceError": true,
-      "cullWithChildrenBounds": true,
-      "preferLeaves": true,
-      "preloadWhenHidden": true,
-      "skipLevelOfDetail": true,
-      "cacheBytes": 1073741824,
-      "maximumCacheOverflowBytes": 2147483648,
-      "show": true,
-      "flyTo": true
-    },
-    {
-      "pid": 70,
-      "type": "3dtiles",
-      "name": "赤壁全域三维模型",
-      "url": "http://10.101.240.60/uav-web/data/chibi-3dtiles/tileset.json",
-      "center": {
-        "lat": 29.714195,
-        "lng": 113.876201,
-        "alt": 786.7,
-        "heading": 38.8,
-        "pitch": -32.6
-      },
-      "maximumScreenSpaceError": 32,
-      "maximumMemoryUsage": 4096,
-      "progressiveResolutionHeightFraction": 0.5,
-      "loadSiblings": true,
-      "cullRequestsWhileMoving": true,
-      "cullRequestsWhileMovingMultiplier": 5,
-      "dynamicScreenSpaceError": true,
-      "cullWithChildrenBounds": true,
-      "preferLeaves": true,
-      "preloadWhenHidden": true,
-      "skipLevelOfDetail": true,
-      "cacheBytes": 1073741824,
-      "maximumCacheOverflowBytes": 2147483648,
-      "show": false,
-      "flyTo": true
-    },
-    {
-      "pid": 70,
-      "type": "3dtiles",
-      "name": "点云模型",
-      "url": "http://10.101.240.60/uav-web/data/pointcloud/tileset.json",
-      "maximumScreenSpaceError": 32,
-      "maximumMemoryUsage": 4096,
-      "progressiveResolutionHeightFraction": 0.5,
-      "loadSiblings": true,
-      "cullRequestsWhileMoving": true,
-      "cullRequestsWhileMovingMultiplier": 5,
-      "dynamicScreenSpaceError": true,
-      "cullWithChildrenBounds": true,
-      "preferLeaves": true,
-      "preloadWhenHidden": true,
-      "skipLevelOfDetail": true,
-      "cacheBytes": 1073741824,
-      "maximumCacheOverflowBytes": 2147483648,
-      "show": false,
-      "flyTo": true
-    },
-    {
-      "pid": 70,
       "type": "geojson",
-      "name": "赤壁市行政区划",
-      "url": "http://10.101.240.60/uav-web/data/赤壁市行政区划边界.geojson",
+      "name": "无为市行政区划",
+      "url": "https://geo.datav.aliyun.com/areas_v3/bound/340281.json",
       "symbol": {
         "styleOptions": {
           "fill": true,
@@ -289,23 +212,6 @@
         }
       },
       "flyTo": true
-    },
-    {
-      "pid": 70,
-      "name": "赤壁市 DOM",
-      "icon": "img/basemaps/esriWorldImagery.png",
-      "type": "xyz",
-      "url": "http://10.101.240.60/uav-web/data/DOM/{z}/{x}/{y}.png",
-      "center": {
-        "lat": 29.512184,
-        "lng": 113.861265,
-        "alt": 30254.8,
-        "heading": 11.5,
-        "pitch": -44.9
-      },
-      "enablePickFeatures": false,
-      "show": false,
-      "flyTo": false
     }
   ]
 }

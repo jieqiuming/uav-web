@@ -28,6 +28,7 @@
           :data-source="tableData" 
           :pagination="pagination"
           rowKey="id"
+          :scroll="{ x: 1300 }"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'algorithm'">
@@ -411,5 +412,20 @@ onMounted(() => {
 
 .table-section {
   margin-top: 20px;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .filter-section {
+     width: 100%;
+     flex-wrap: wrap;
+     gap: 10px;
+  }
 }
 </style>

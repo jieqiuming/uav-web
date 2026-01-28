@@ -1,17 +1,23 @@
 <template>
   <ConfigProvider :locale="locale">
     <div class="mars-main-view" id="mars-main-view">
-      <!-- 顶部栏 -->
-      <top-bar />
+      <!-- 标准模式：顶部栏 -->
+      <top-bar v-show="viewMode === 'standard'" />
       
+      <!-- 地图容器 (始终存在，作为最底层背景) -->
       <div id="centerDiv" class="centerDiv-container">
         <mars-map :url="configUrl" :options="mapOptions" @onload="marsOnload" />
       </div>
-      <template v-if="loaded">
+
+      <!-- 标准模式：Widget 弹窗 -->
+      <template v-if="loaded && viewMode === 'standard'">
         <template v-for="comp in widgets" :key="comp.key">
           <mars-widget v-if="openAtStart.includes(comp.name) && comp.visible" v-model:visible="comp.visible" :widget="comp" />
         </template>
       </template>
+
+      <!-- 大屏模式：Dashboard 布局 -->
+      <dashboard-layout v-if="viewMode === 'dashboard'" @exit="setViewMode('standard')" />
     </div>
   </ConfigProvider>
 </template>
@@ -29,6 +35,7 @@ import { useWidgetStore } from "@mars/common/store/widget"
 import MarsMap from "@mars/components/mars-work/mars-map.vue"
 import MarsWidget from "./widget.vue"
 import TopBar from "@mars/components/system-menu/top-bar.vue"
+import DashboardLayout from "./dashboard-layout.vue" // 新增
 import { logInfo } from "@mars/utils/mars-util"
 
 const locale = zhCN
@@ -65,6 +72,14 @@ const marsOnload = (map: any) => {
   emit("mapLoaded", mapInstance)
   loaded.value = true
 }
+
+// 视图模式管理
+const viewMode = ref("standard") // standard | dashboard
+const setViewMode = (mode: string) => {
+  viewMode.value = mode
+}
+provide("viewMode", viewMode)
+provide("setViewMode", setViewMode)
 </script>
 
 <style lang="less" scoped>
