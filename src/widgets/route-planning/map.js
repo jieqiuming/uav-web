@@ -7,7 +7,7 @@ let waypointLayer
 // 需要覆盖config.json中地图属性参数（当前示例框架中自动处理合并）
 export const mapOptions = {
   scene: {
-    center: { lat: 29.785027, lng: 113.909418, alt: 465.5, heading: 340.9, pitch: -34 }
+    center: { lng: 118.318, lat: 31.367, alt: 465.5, heading: 340.9, pitch: -34 }
   }
 }
 
@@ -48,10 +48,10 @@ function addGraphicLayers() {
   addMockNoFlyZone()
 }
 
-// 模拟禁飞区 (赤壁附近)
+// 模拟禁飞区 (无为附近 113.915, 29.780 118.318711,31.36727)
 const noFlyZones = [
   {
-    center: [113.915, 29.780],
+    center: [118.318711, 31.36727],
     radius: 500, // 半径500米
     maxAlt: 200, // 高度限制200米
     name: "演示禁飞区A"

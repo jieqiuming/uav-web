@@ -7,7 +7,7 @@ let previewLayer
 // 需要覆盖config.json中地图属性参数（当前示例框架中自动处理合并）
 export const mapOptions = {
   scene: {
-    center: { lat: 29.785027, lng: 113.909418, alt: 465.5, heading: 340.9, pitch: -34 }
+    center: { lng: 118.318, lat: 31.367, alt: 465.5, heading: 340.9, pitch: -34 }
   }
 }
 
@@ -388,16 +388,16 @@ export function getRouteStatistics() {
     altitudeRange:
       routes.length > 0
         ? {
-            min: Math.min(...routes.map((r) => r.altitude)),
-            max: Math.max(...routes.map((r) => r.altitude))
-          }
+          min: Math.min(...routes.map((r) => r.altitude)),
+          max: Math.max(...routes.map((r) => r.altitude))
+        }
         : { min: 0, max: 0 },
     speedRange:
       routes.length > 0
         ? {
-            min: Math.min(...routes.map((r) => r.speed)),
-            max: Math.max(...routes.map((r) => r.speed))
-          }
+          min: Math.min(...routes.map((r) => r.speed)),
+          max: Math.max(...routes.map((r) => r.speed))
+        }
         : { min: 0, max: 0 }
   }
 }

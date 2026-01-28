@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog :visible="true" width="500" right="10" top="100" bottom="120">
+  <mars-dialog v-model:visible="isActivate" width="500" right="10" top="100" bottom="120">
     <template #title>航线管理</template>
 
     <div class="route-management">
@@ -156,7 +156,7 @@ const routeStatistics = computed(() => {
 })
 
 // Widget控制
-const { activate, disable } = useWidget()
+const { isActivate, activate, disable } = useWidget()
 
 // 生命周期
 onMounted(() => {

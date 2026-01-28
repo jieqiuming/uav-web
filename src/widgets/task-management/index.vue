@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog :visible="true" title="飞行任务管理" width="800" right="200" top="100">
+  <mars-dialog v-model:visible="isActivate" title="飞行任务管理" width="800" right="200" top="100">
     <div class="task-management">
       <div class="toolbar">
         <mars-button type="primary" @click="showCreateModal">创建任务</mars-button>
@@ -76,7 +76,7 @@ import dayjs from "dayjs"
 import * as aircraftApi from "@mars/widgets/aircraft-management/api/aircraft"
 
 useLifecycle(mapWork)
-const { activate } = useWidget()
+const { isActivate, activate, disable } = useWidget()
 
 // 状态定义
 const taskList = ref<any[]>([])
@@ -194,6 +194,9 @@ const executeTask = (record: any) => {
 
   // 补全机型名称到航线数据中(用于显示)
   route.aircraftName = record.aircraftName
+
+  // 启动演练前先关闭任务管理列表，防止遮挡
+  disable("task-management")
 
   // 跳转到飞行演示模块
   activate({

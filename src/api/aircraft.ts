@@ -1,14 +1,14 @@
 /**
  * 机型管理API接口
- * @copyright 赤壁低空云平台
+ * @copyright 无为低空云平台
  */
-import type { 
-  AircraftModel, 
-  AircraftModelForm, 
+import type {
+  AircraftModel,
+  AircraftModelForm,
   AircraftModelOption,
   AircraftQueryParams,
   PageResult,
-  ApiResponse 
+  ApiResponse
 } from "../types/aircraft"
 
 // 模拟数据 - 后续替换为真实API调用
@@ -100,34 +100,34 @@ const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, m
  */
 export async function getAircraftModels(params: AircraftQueryParams): Promise<ApiResponse<PageResult<AircraftModel>>> {
   await delay()
-  
+
   let filteredData = [...mockAircraftModels]
-  
+
   // 关键词搜索
   if (params.keyword) {
     const keyword = params.keyword.toLowerCase()
-    filteredData = filteredData.filter(item => 
+    filteredData = filteredData.filter(item =>
       item.modelName.toLowerCase().includes(keyword) ||
       item.manufacturer.toLowerCase().includes(keyword) ||
       item.modelCode.toLowerCase().includes(keyword)
     )
   }
-  
+
   // 状态筛选
   if (params.status !== undefined) {
     filteredData = filteredData.filter(item => item.status === params.status)
   }
-  
+
   // 制造商筛选
   if (params.manufacturer) {
     filteredData = filteredData.filter(item => item.manufacturer === params.manufacturer)
   }
-  
+
   // 分页
   const start = (params.page - 1) * params.size
   const end = start + params.size
   const data = filteredData.slice(start, end)
-  
+
   return {
     code: 200,
     message: 'success',
@@ -147,7 +147,7 @@ export async function getAircraftModels(params: AircraftQueryParams): Promise<Ap
  */
 export async function getAircraftModel(id: number): Promise<ApiResponse<AircraftModel>> {
   await delay(200)
-  
+
   const aircraft = mockAircraftModels.find(item => item.id === id)
   if (!aircraft) {
     return {
@@ -157,7 +157,7 @@ export async function getAircraftModel(id: number): Promise<ApiResponse<Aircraft
       data: null
     }
   }
-  
+
   return {
     code: 200,
     message: 'success',
@@ -171,7 +171,7 @@ export async function getAircraftModel(id: number): Promise<ApiResponse<Aircraft
  */
 export async function createAircraftModel(formData: AircraftModelForm): Promise<ApiResponse<AircraftModel>> {
   await delay(800)
-  
+
   // 检查机型编码是否重复
   const exists = mockAircraftModels.some(item => item.modelCode === formData.modelCode)
   if (exists) {
@@ -182,16 +182,16 @@ export async function createAircraftModel(formData: AircraftModelForm): Promise<
       data: null
     }
   }
-  
+
   const newAircraft: AircraftModel = {
     id: nextId++,
     ...formData,
     createdAt: new Date().toLocaleString(),
     updatedAt: new Date().toLocaleString()
   }
-  
+
   mockAircraftModels.push(newAircraft)
-  
+
   return {
     code: 200,
     message: '创建成功',
@@ -205,7 +205,7 @@ export async function createAircraftModel(formData: AircraftModelForm): Promise<
  */
 export async function updateAircraftModel(id: number, formData: AircraftModelForm): Promise<ApiResponse<AircraftModel>> {
   await delay(800)
-  
+
   const index = mockAircraftModels.findIndex(item => item.id === id)
   if (index === -1) {
     return {
@@ -215,7 +215,7 @@ export async function updateAircraftModel(id: number, formData: AircraftModelFor
       data: null
     }
   }
-  
+
   // 检查机型编码是否重复（排除自己）
   const exists = mockAircraftModels.some(item => item.id !== id && item.modelCode === formData.modelCode)
   if (exists) {
@@ -226,15 +226,15 @@ export async function updateAircraftModel(id: number, formData: AircraftModelFor
       data: null
     }
   }
-  
+
   const updatedAircraft: AircraftModel = {
     ...mockAircraftModels[index],
     ...formData,
     updatedAt: new Date().toLocaleString()
   }
-  
+
   mockAircraftModels[index] = updatedAircraft
-  
+
   return {
     code: 200,
     message: '更新成功',
@@ -248,7 +248,7 @@ export async function updateAircraftModel(id: number, formData: AircraftModelFor
  */
 export async function deleteAircraftModel(id: number): Promise<ApiResponse<null>> {
   await delay(500)
-  
+
   const index = mockAircraftModels.findIndex(item => item.id === id)
   if (index === -1) {
     return {
@@ -258,9 +258,9 @@ export async function deleteAircraftModel(id: number): Promise<ApiResponse<null>
       data: null
     }
   }
-  
+
   mockAircraftModels.splice(index, 1)
-  
+
   return {
     code: 200,
     message: '删除成功',
@@ -274,7 +274,7 @@ export async function deleteAircraftModel(id: number): Promise<ApiResponse<null>
  */
 export async function getAircraftModelOptions(): Promise<ApiResponse<AircraftModelOption[]>> {
   await delay(300)
-  
+
   const options = mockAircraftModels
     .filter(item => item.status === 1)
     .map(item => ({
@@ -282,7 +282,7 @@ export async function getAircraftModelOptions(): Promise<ApiResponse<AircraftMod
       label: `${item.modelName} (${item.modelCode})`,
       disabled: false
     }))
-  
+
   return {
     code: 200,
     message: 'success',
@@ -296,9 +296,9 @@ export async function getAircraftModelOptions(): Promise<ApiResponse<AircraftMod
  */
 export async function getManufacturers(): Promise<ApiResponse<string[]>> {
   await delay(200)
-  
+
   const manufacturers = [...new Set(mockAircraftModels.map(item => item.manufacturer))]
-  
+
   return {
     code: 200,
     message: 'success',

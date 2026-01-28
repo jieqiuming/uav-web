@@ -5,7 +5,7 @@ let graphicLayer
 // 需要覆盖config.json中地图属性参数（当前示例框架中自动处理合并）
 export const mapOptions = {
   scene: {
-    center: { lat: 29.785027, lng: 113.909418, alt: 465.5, heading: 340.9, pitch: -34 }
+    center: { lng: 118.318, lat: 31.367, alt: 465.5, heading: 340.9, pitch: -34 }
   },
   control: {
     clockAnimate: true, // 时钟动画控制(左下角)
@@ -16,16 +16,14 @@ export const mapOptions = {
 
 export const eventTarget = new mars3d.BaseClass() // 事件对象，用于抛出事件到组件中
 
-// 航线路径
+// 航线路径 (适配无为中心 118.318, 31.367)
 const positions = [
-  [113.908869, 29.790335, 120],
-  [113.9088, 29.7901, 120],
-  [113.908644, 29.789877, 120],
-  [113.908033, 29.78964, 120],
-  [113.906848, 29.789695, 120],
-  [113.906372, 29.790028, 120],
-  [113.905873, 29.790888, 120],
-  [113.904768, 29.791604, 120]
+  [118.318, 31.367, 150],
+  [118.322, 31.370, 150],
+  [118.325, 31.372, 180],
+  [118.328, 31.375, 180],
+  [118.332, 31.372, 150],
+  [118.330, 31.368, 120]
 ]
 
 // 初始化地图业务，生命周期钩子函数（必须）,框架在地图初始化完成后自动调用该函数
@@ -38,6 +36,14 @@ export function onMounted(mapInstance) {
 
 // 释放当前地图业务的生命周期函数,具体项目中时必须写onMounted的反向操作（如解绑事件、对象销毁、变量置空）
 export function onUnmounted() {
+  if (fixedRoute) {
+    fixedRoute.stop() // 停止飞行
+    fixedRoute = null
+  }
+  if (graphicLayer) {
+    graphicLayer.remove() // 移除图层
+    graphicLayer = null
+  }
   hideIndexNumPoint() // 清理数字点位标识
   hideGroundLine() // 清理连接地面线
   map = null
@@ -216,6 +222,16 @@ export function updateRoutePaths(routeData) {
       eventTarget.fire("roamLineChange", data)
     }, 100)
   )
+
+  // 绑定结束事件
+  fixedRoute.on(mars3d.EventType.end, (event) => {
+    console.log("飞行结束", event)
+    eventTarget.fire("flightEnd", {
+      name: fixedRoute.name,
+      distance: fixedRoute.info.distance_all,
+      duration: fixedRoute.info.second_all
+    })
+  })
 
   // 启动
   fixedRoute.start()

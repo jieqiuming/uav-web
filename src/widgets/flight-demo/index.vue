@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog :visible="true" width="330" right="10" top="200">
+  <mars-dialog v-model:visible="isActivate" width="330" right="10" top="200">
     <div class="f-mb">
       <a-row :gutter="[0, 10]">
         <a-col :span="8">飞行视角:</a-col>
@@ -89,6 +89,7 @@
 import FixedRouteInfo from "./fixedRoute-info.vue"
 
 import { reactive, ref, onMounted } from "vue"
+import { message } from "ant-design-vue"
 import * as mapWork from "./map.js"
 import useLifecycle from "@mars/common/uses/use-lifecycle"
 import { useWidget } from "@mars/common/store/widget"
@@ -96,7 +97,7 @@ import { useWidget } from "@mars/common/store/widget"
 // 启用map.ts生命周期
 useLifecycle(mapWork)
 // Widget状态管理
-const { activate, currentWidget } = useWidget()
+const { isActivate, activate, currentWidget } = useWidget()
 
 // 监听Widget激活事件，处理参数传递 (如从任务管理跳转过来)
 currentWidget.onUpdate((widget: any) => {
@@ -116,6 +117,12 @@ onMounted(() => {
     // 初始显示
   }
   
+  // 监听地图事件
+  mapWork.eventTarget.on("flightEnd", (data: any) => {
+    console.log("捕获到飞行结束事件，准备生成报告:", data)
+    saveFlightReport(data)
+  })
+
   // 监听外部数据更新
   if (currentWidget) {
     currentWidget.onUpdate((data: any) => {
@@ -126,6 +133,27 @@ onMounted(() => {
     })
   }
 })
+
+// 保存飞行报告到 LocalStorage
+const saveFlightReport = (data: any) => {
+  try {
+    const reports = JSON.parse(localStorage.getItem("uav_flight_reports") || "[]")
+    const newReport = {
+      id: "REP-" + Date.now(),
+      name: data.name || "自主巡检任务",
+      date: new Date().toLocaleString(),
+      duration: Math.round(data.duration) + "s",
+      distance: (data.distance / 1000).toFixed(2) + "km",
+      status: "已完成",
+      type: "自动生成"
+    }
+    reports.unshift(newReport)
+    localStorage.setItem("uav_flight_reports", JSON.stringify(reports.slice(0, 20))) // 只保留最近20条
+    message.success("飞行任务已完成，报告已自动生成并保存")
+  } catch (e) {
+    console.error("保存报告失败", e)
+  }
+}
 
 interface FormState {
   isStart: boolean

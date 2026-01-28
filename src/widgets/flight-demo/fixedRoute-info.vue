@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog :visible="true" right="10" bottom="60" width="360">
+  <mars-dialog v-model:visible="isActivate" right="10" bottom="60" width="360">
     <div class="flight-dashboard" style="min-height: 200px">
       <!-- 进度条 -->
       <div class="progress-section">
@@ -60,9 +60,12 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, defineProps, defineEmits, onUnmounted } from "vue"
+import { useWidget } from "@mars/common/store/widget"
 import type { UnwrapRef } from "vue"
 import * as mapWork from "./map.js"
 import InstrumentPanel from "./components/InstrumentPanel.vue"
+
+const { isActivate } = useWidget()
 
 interface FormState {
   td_alllength: string
