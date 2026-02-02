@@ -1,0 +1,8 @@
+{
+    "name": "工单管理",
+    "icon": "form",
+    "group": "manage",
+    "component": "index.vue",
+    "openAtStart": false,
+    "supportParams": true
+}

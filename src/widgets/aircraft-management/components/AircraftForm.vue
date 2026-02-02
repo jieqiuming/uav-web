@@ -124,7 +124,7 @@
 import { ref, reactive, computed, watch } from "vue"
 import { Form } from "ant-design-vue"
 import { $message } from "@mars/components/mars-ui"
-import * as aircraftApi from "../api/aircraft"
+import * as aircraftApi from "@/api/services/aircraft"
 import type { AircraftModel, CreateAircraftDTO, UpdateAircraftDTO } from "../types/index"
 
 // Props
@@ -289,7 +289,8 @@ const handleSubmit = async () => {
 
     if (props.isEdit && props.aircraftData) {
       // 编辑模式
-      await aircraftApi.updateAircraft(props.aircraftData.id, submitData as UpdateAircraftDTO)
+      const updatePayload = { ...submitData, id: props.aircraftData.id }
+      await aircraftApi.updateAircraft(updatePayload as unknown as UpdateAircraftDTO)
       $message("机型更新成功", "success")
     } else {
       // 新增模式

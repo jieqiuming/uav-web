@@ -20,12 +20,36 @@
     "isolatedModules": false,
     "baseUrl": ".",
     "outDir": "dist",
-    "types": ["vite/client", "node"],
-    "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
+    "types": [
+      "vite/client",
+      "node"
+    ],
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ],
     "paths": {
-      "@mars/*": ["src/*"]
+      "@mars/*": [
+        "src/*"
+      ],
+      "@/*": [
+        "src/*"
+      ]
     }
   },
-  "include": ["src/**/*.ts", "packages/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/components/mars-work/expand/index.js", "src/widgets/basic/measure/map.js"],
-  "exclude": ["node_modules", "src/**/*.js", "dist"]
+  "include": [
+    "src/**/*.ts",
+    "packages/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "src/components/mars-work/expand/index.js",
+    "src/widgets/basic/measure/map.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/**/*.js",
+    "dist"
+  ]
 }

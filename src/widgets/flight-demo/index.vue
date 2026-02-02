@@ -94,14 +94,21 @@ import * as mapWork from "./map.js"
 import useLifecycle from "@mars/common/uses/use-lifecycle"
 import { useWidget } from "@mars/common/store/widget"
 
+import * as flightTaskApi from "@/api/services/flight-task"
+
 // 启用map.ts生命周期
 useLifecycle(mapWork)
 // Widget状态管理
 const { isActivate, activate, currentWidget } = useWidget()
 
-// 监听Widget激活事件，处理参数传递 (如从任务管理跳转过来)
+const currentTaskId = ref<string>("")
+
+// 监听Widget激活事件，处理参数传递
 currentWidget.onUpdate((widget: any) => {
   if (widget && widget.data) {
+    if (widget.data.taskId) {
+      currentTaskId.value = widget.data.taskId
+    }
     if (widget.data.route) {
        console.log('接收到飞行任务数据:', widget.data)
        // 延迟一点为了确保地图加载完成
@@ -121,6 +128,11 @@ onMounted(() => {
   mapWork.eventTarget.on("flightEnd", (data: any) => {
     console.log("捕获到飞行结束事件，准备生成报告:", data)
     saveFlightReport(data)
+    
+    // 如果关联了任务ID，更新任务状态
+    if (currentTaskId.value) {
+      updateTaskStatus(currentTaskId.value)
+    }
   })
 
   // 监听外部数据更新
@@ -130,9 +142,21 @@ onMounted(() => {
       if (data.routeData) {
         mapWork.updateRoutePaths(data.routeData)
       }
+      if (data.taskId) {
+        currentTaskId.value = data.taskId
+      }
     })
   }
 })
+
+const updateTaskStatus = async (taskId: string) => {
+  try {
+    await flightTaskApi.updateFlightTaskStatus(taskId, 'completed')
+    message.success("关联任务状态已更新为完成")
+  } catch (e) {
+    console.error("更新任务状态失败", e)
+  }
+}
 
 // 保存飞行报告到 LocalStorage
 const saveFlightReport = (data: any) => {
@@ -141,6 +165,7 @@ const saveFlightReport = (data: any) => {
     const newReport = {
       id: "REP-" + Date.now(),
       name: data.name || "自主巡检任务",
+      taskId: currentTaskId.value, // Record Task ID
       date: new Date().toLocaleString(),
       duration: Math.round(data.duration) + "s",
       distance: (data.distance / 1000).toFixed(2) + "km",
@@ -148,8 +173,8 @@ const saveFlightReport = (data: any) => {
       type: "自动生成"
     }
     reports.unshift(newReport)
-    localStorage.setItem("uav_flight_reports", JSON.stringify(reports.slice(0, 20))) // 只保留最近20条
-    message.success("飞行任务已完成，报告已自动生成并保存")
+    localStorage.setItem("uav_flight_reports", JSON.stringify(reports.slice(0, 20))) 
+    message.success("飞行报告已生成")
   } catch (e) {
     console.error("保存报告失败", e)
   }

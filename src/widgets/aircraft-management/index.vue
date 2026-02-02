@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog title="机型管理" icon="drone" custom-class="aircraft-management-panel" :draggable="true" width="1100" height="700" top="90" left="80">
+  <mars-dialog v-model:visible="isActivate" title="机型管理" icon="drone" custom-class="aircraft-management-panel" :draggable="true" width="1100" height="700" top="90" left="80">
     <!-- 统计信息 -->
     <div class="stats-panel">
       <div class="stat-item total">
@@ -123,19 +123,20 @@ import { ref, reactive, onMounted, computed } from "vue"
 import { useWidget } from "@mars/common/store/widget"
 import AircraftForm from "./components/AircraftForm.vue"
 import { $message } from "@mars/components/mars-ui"
-import * as aircraftApi from "@mars/widgets/aircraft-management/api/aircraft"
+import * as aircraftApi from "@/api/services/aircraft" // Updated import
 import type { AircraftModel, AircraftSearchParams, AircraftStats } from "./types/index"
 import { Modal } from "ant-design-vue"
 
+const { isActivate } = useWidget()
 
-
-// Widget相关
-const { currentWidget } = useWidget()
-
-// 响应式数据
+// 状态变量
 const loading = ref(false)
-const searchKeyword = ref("")
 const aircraftList = ref<AircraftModel[]>([])
+const stats = ref<AircraftStats>({ totalCount: 0, activeCount: 0, inactiveCount: 0, manufacturerStats: [] })
+const searchKeyword = ref("")
+const selectedRowKeys = ref<number[]>([])
+
+// 弹窗控制
 const formVisible = ref(false)
 const deleteVisible = ref(false)
 const deleteLoading = ref(false)
@@ -143,22 +144,12 @@ const currentAircraft = ref<AircraftModel | null>(null)
 const deleteTarget = ref<AircraftModel | null>(null)
 const isEditMode = ref(false)
 
-// 统计数据
-const stats = ref<AircraftStats>({
-  totalCount: 0,
-  activeCount: 0,
-  inactiveCount: 0,
-  manufacturerStats: []
-})
-
-// 多选相关
-const selectedRowKeys = ref<number[]>([])
-const rowSelection = {
-  selectedRowKeys,
-  onChange: (keys: number[]) => {
-    selectedRowKeys.value = keys
-  }
-}
+// 搜索参数
+const searchParams = computed<AircraftSearchParams>(() => ({
+  keyword: searchKeyword.value,
+  page: paginationConfig.current,
+  pageSize: paginationConfig.pageSize
+}))
 
 // 分页配置
 const paginationConfig = reactive({
@@ -166,102 +157,38 @@ const paginationConfig = reactive({
   pageSize: 10,
   total: 0,
   showSizeChanger: true,
-  showQuickJumper: true,
-  showTotal: (total: number) => `共 ${total} 条记录`
+  showQuickJumper: true
 })
+
+// 行选择配置
+const rowSelection = computed(() => ({
+  selectedRowKeys: selectedRowKeys.value,
+  onChange: (keys: number[]) => {
+    selectedRowKeys.value = keys
+  }
+}))
 
 // 表格列配置
 const tableColumns = [
-  {
-    title: "图片",
-    dataIndex: "imageUrl",
-    key: "imageUrl",
-    width: 80,
-    slots: { customRender: "imageUrl" }
-  },
-  {
-    title: "机型名称",
-    dataIndex: "modelName",
-    key: "modelName",
-    width: 150
-  },
-  {
-    title: "制造商",
-    dataIndex: "manufacturer",
-    key: "manufacturer",
-    width: 120
-  },
-  {
-    title: "机型编码",
-    dataIndex: "modelCode",
-    key: "modelCode",
-    width: 120
-  },
-  {
-    title: "最大飞行时间",
-    dataIndex: "maxFlightTime",
-    key: "maxFlightTime",
-    width: 120,
-    customRender: ({ text }: any) => (text ? `${text}分钟` : "-")
-  },
-  {
-    title: "最大距离",
-    dataIndex: "maxFlightDistance",
-    key: "maxFlightDistance",
-    width: 100,
-    customRender: ({ text }: any) => (text ? `${text}km` : "-")
-  },
-  {
-    title: "最大高度",
-    dataIndex: "maxAltitude",
-    key: "maxAltitude",
-    width: 100,
-    customRender: ({ text }: any) => (text ? `${text}m` : "-")
-  },
-  {
-    title: "状态",
-    dataIndex: "status",
-    key: "status",
-    width: 100,
-    slots: { customRender: "status" }
-  },
-  {
-    title: "创建时间",
-    dataIndex: "createdAt",
-    key: "createdAt",
-    width: 150,
-    customRender: ({ text }: any) => (text ? new Date(text).toLocaleString() : "-")
-  },
-  {
-    title: "操作",
-    key: "action",
-    width: 200,
-    fixed: "right",
-    slots: { customRender: "action" }
-  }
+  { title: "图片", dataIndex: "imageUrl", key: "imageUrl", slots: { customRender: "imageUrl" }, width: 80 },
+  { title: "机型名称", dataIndex: "modelName", key: "modelName", width: 150 },
+  { title: "编码", dataIndex: "modelCode", key: "modelCode", width: 120 },
+  { title: "机型类型", dataIndex: "modelType", key: "modelType", width: 100 },
+  { title: "最大载重(kg)", dataIndex: "maxPayload", key: "maxPayload", width: 120 },
+  { title: "最大航程(km)", dataIndex: "maxRange", key: "maxRange", width: 120 },
+  { title: "最大飞行时长(min)", dataIndex: "maxFlightTime", key: "maxFlightTime", width: 150 },
+  { title: "状态", dataIndex: "status", key: "status", slots: { customRender: "status" }, width: 80 },
+  { title: "操作", key: "action", slots: { customRender: "action" }, width: 200, fixed: "right" }
 ]
-
-// 搜索参数
-const searchParams = computed(
-  (): AircraftSearchParams => ({
-    page: paginationConfig.current,
-    size: paginationConfig.pageSize,
-    keyword: searchKeyword.value.trim() || undefined
-  })
-)
-
-// 生命周期
-onMounted(() => {
-  loadAircraftList()
-})
 
 // 方法
 const loadAircraftList = async () => {
   try {
     loading.value = true
     const response = await aircraftApi.getAircraftList(searchParams.value)
-    aircraftList.value = response.data.records
-    paginationConfig.total = response.data.total
+    // Interceptor 已经解包了 data，直接使用 response
+    aircraftList.value = response.records
+    paginationConfig.total = response.total
     loadStats()
   } catch (error) {
     console.error("加载机型列表失败:", error)
@@ -274,7 +201,7 @@ const loadAircraftList = async () => {
 const loadStats = async () => {
   try {
     const res = await aircraftApi.getAircraftStats()
-    stats.value = res.data
+    stats.value = res // Interceptor 已经解包了 data
   } catch (error) {
     console.error("加载统计失败", error)
   }
@@ -284,6 +211,7 @@ const handleSearch = () => {
   paginationConfig.current = 1
   loadAircraftList()
 }
+// ... (后面代码逻辑基本不需要变，因为其他方法主要是 void 或者不依赖返回值结构)
 
 const handleRefresh = () => {
   searchKeyword.value = ""
@@ -392,6 +320,10 @@ const handleFormSuccess = () => {
   formVisible.value = false
   loadAircraftList()
 }
+
+onMounted(() => {
+  loadAircraftList()
+})
 </script>
 
 <style lang="less" scoped>
@@ -482,27 +414,64 @@ const handleFormSuccess = () => {
     height: calc(100% - 80px);
     overflow: auto;
 
+    // 表格深色主题样式
+    :deep(.mars-table),
+    :deep(.ant-table) {
+      background: transparent;
+      
+      .ant-table-thead > tr > th {
+        background: rgba(0, 0, 0, 0.2);
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 500;
+        font-size: 13px;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        
+        &::before {
+          display: none !important;
+        }
+      }
+      
+      .ant-table-tbody > tr > td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 13px;
+      }
+      
+      .ant-table-tbody > tr:hover > td {
+        background: rgba(24, 144, 255, 0.08);
+      }
+    }
+
     .status-tag {
       padding: 2px 8px;
       border-radius: 4px;
       font-size: 12px;
+      font-weight: 500;
 
       &.active {
-        background: #f6ffed;
-        color: #52c41a;
-        border: 1px solid #b7eb8f;
+        background: #52c41a;
+        color: #fff;
+        border: none;
       }
 
       &.inactive {
-        background: #fff2f0;
-        color: #ff4d4f;
-        border: 1px solid #ffccc7;
+        background: #ff4d4f;
+        color: #fff;
+        border: none;
       }
     }
 
     .action-buttons {
       display: flex;
       gap: 4px;
+      flex-wrap: nowrap;
+      
+      :deep(.mars-button) {
+        padding: 0 8px;
+        font-size: 12px;
+      }
     }
   }
 

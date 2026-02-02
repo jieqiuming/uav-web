@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog :visible="true" title="设备管理" width="900" right="200" top="100">
+  <mars-dialog v-model:visible="isActivate" title="设备管理" width="900" right="200" top="100">
     <div class="device-management">
       <div class="toolbar">
         <a-space>
@@ -80,8 +80,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from "vue"
+import { useWidget } from "@mars/common/store/widget"
 import { message } from "ant-design-vue"
 import dayjs from "dayjs"
+
+const { isActivate } = useWidget()
 
 // 状态定义
 const deviceList = ref<any[]>([])
@@ -109,7 +112,7 @@ const formState = reactive({
 
 const columns = [
   { title: "设备名称", dataIndex: "name", key: "name" },
-  { title: "类型", dataIndex: "type", key: "type", customRender: ({ text }) => typeOptions.find(t=>t.value===text)?.label || text },
+  { title: "类型", dataIndex: "type", key: "type", customRender: ({ text }) => typeOptions.find(t => t.value === text)?.label || text },
   { title: "序列号", dataIndex: "sn", key: "sn" },
   { title: "状态", dataIndex: "status", key: "status", slots: { customRender: "status" } },
   { title: "添加时间", dataIndex: "createdAt", key: "createdAt" },
@@ -117,7 +120,9 @@ const columns = [
 ]
 
 const filteredData = computed(() => {
-  if (!searchText.value) return deviceList.value
+  if (!searchText.value) {
+    return deviceList.value
+  }
   const lower = searchText.value.toLowerCase()
   return deviceList.value.filter(item => 
     item.name.toLowerCase().includes(lower) || 

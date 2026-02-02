@@ -32,7 +32,8 @@ export default ({ mode }: ConfigEnv) => {
     },
     resolve: {
       alias: {
-        "@mars": path.join(__dirname, "src")
+        "@mars": path.join(__dirname, "src"),
+        "@": path.join(__dirname, "src")
       },
       extensions: [".js", ".ts", ".jsx", ".tsx", ".json"]
     },

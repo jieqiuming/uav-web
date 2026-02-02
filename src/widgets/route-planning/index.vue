@@ -333,7 +333,7 @@ const handleSimulationStatusChanged = (event: any) => {
   console.log('仿真状态更新:', status, { isPause, isStart })
 }
 
-const saveRoute = () => {
+const saveRoute = async () => {
   if (waypoints.value.length < 2) {
     message.error('至少需要2个航点才能保存航线')
     return
@@ -353,11 +353,14 @@ const saveRoute = () => {
     updatedAt: new Date().toISOString()
   }
   
-  mapWork.saveRoute(routeData)
-  message.success(isEditing ? '航线更新成功' : '航线保存成功')
-  
-  // 重置状态
-  resetPlanning()
+  const success = await mapWork.saveRoute(routeData)
+  if (success) {
+    message.success(isEditing ? '航线更新成功' : '航线保存成功')
+    // 重置状态
+    resetPlanning()
+  } else {
+    message.error('保存失败')
+  }
 }
 
 const backToSettings = () => {

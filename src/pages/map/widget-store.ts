@@ -163,6 +163,18 @@ const store: StoreOptions<WidgetState> = {
         component: markRaw(defineAsyncComponent(() => import("@mars/widgets/device-management/index.vue"))),
         name: "device-management",
         group: "system"
+      },
+      {
+        // 工单管理
+        component: markRaw(defineAsyncComponent(() => import("@mars/widgets/work-order/index.vue"))),
+        name: "work-order",
+        group: "system"
+      },
+      {
+        // 人员管理
+        component: markRaw(defineAsyncComponent(() => import("@mars/widgets/personnel-management/index.vue"))),
+        name: "personnel-management",
+        group: "system"
       }
     ],
     openAtStart: ["toolbar", "query-poi"]

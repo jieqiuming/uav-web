@@ -15,6 +15,12 @@
       >
         <template #action="{ record }">
           <a-space>
+            <a-button 
+              v-if="record.routeId === 'pending' || record.routeName === '待规划航线'" 
+              type="link" 
+              size="small"
+              @click="showAssignRouteModal(record)"
+            >分配航线</a-button>
             <a-button type="link" size="small" @click="executeTask(record)">执行</a-button>
             <a-button type="link" size="small" danger @click="deleteTask(record.id)">删除</a-button>
           </a-space>
@@ -62,6 +68,34 @@
           </div>
         </a-form>
       </mars-dialog>
+
+      <!-- 分配航线弹窗 -->
+      <mars-dialog
+        v-model:visible="isAssignRouteVisible"
+        title="分配航线"
+        width="450"
+        :footer="null"
+      >
+        <div v-if="currentTask" class="assign-route-content">
+          <p>任务：<strong>{{ currentTask.name }}</strong></p>
+          <a-form layout="vertical">
+            <a-form-item label="选择航线">
+              <mars-select
+                v-model:value="assignRouteId"
+                :options="routeOptions"
+                placeholder="请选择航线"
+                style="width: 100%"
+              />
+            </a-form-item>
+            <div class="form-footer text-right">
+              <a-space>
+                <mars-button @click="isAssignRouteVisible = false">取消</mars-button>
+                <mars-button type="primary" @click="handleAssignRoute">确定</mars-button>
+              </a-space>
+            </div>
+          </a-form>
+        </div>
+      </mars-dialog>
     </div>
   </mars-dialog>
 </template>
@@ -73,7 +107,9 @@ import useLifecycle from "@mars/common/uses/use-lifecycle"
 import { useWidget } from "@mars/common/store/widget"
 import { message } from "ant-design-vue"
 import dayjs from "dayjs"
-import * as aircraftApi from "@mars/widgets/aircraft-management/api/aircraft"
+import * as aircraftApi from "@/api/services/aircraft"
+import * as routeApi from "@/api/services/route"
+import * as flightTaskApi from "@/api/services/flight-task"
 
 useLifecycle(mapWork)
 const { isActivate, activate, disable } = useWidget()
@@ -81,11 +117,11 @@ const { isActivate, activate, disable } = useWidget()
 // 状态定义
 const taskList = ref<any[]>([])
 const isModalVisible = ref(false)
+const isAssignRouteVisible = ref(false)
+const currentTask = ref<any>(null)
+const assignRouteId = ref<string | undefined>(undefined)
 const aircraftOptions = ref<any[]>([])
 const routeOptions = ref<any[]>([])
-
-// 本地存储Key
-const STORAGE_KEY = "uav_tasks"
 
 const formState = reactive({
   name: "",
@@ -104,24 +140,26 @@ const columns = [
 
 // 加载数据 (机型、航线、任务)
 const loadData = async () => {
-  // 1. 加载机型 (通过API确保数据初始化)
+  // 1. 加载机型
   try {
     const res = await aircraftApi.getActiveAircraftOptions()
-    if (res && res.data) {
-       aircraftOptions.value = res.data
+    if (res) {
+       aircraftOptions.value = res
     }
   } catch (e) {
     console.error("加载机型失败", e)
   }
 
-  // 2. 加载航线
+  // 2. 加载航线 - 改为API调用
   try {
-    const routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
-    routeOptions.value = routes.map((r: any) => ({
-      value: r.id,
-      label: r.name,
-      origin: r
-    }))
+    const res = await routeApi.getRoutes()
+    if (res) {
+      routeOptions.value = res.map((r: any) => ({
+        value: r.id,
+        label: r.name,
+        origin: r
+      }))
+    }
   } catch (e) {
     console.error("加载航线失败", e)
   }
@@ -130,29 +168,25 @@ const loadData = async () => {
   loadTasks()
 }
 
-const loadTasks = () => {
+const loadTasks = async () => {
    try {
-    const tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")
-    taskList.value = tasks
+    const res = await flightTaskApi.getFlightTaskList()
+    taskList.value = res || []
   } catch (e) {
     console.error("加载任务列表失败", e)
+    message.error("加载任务列表失败")
   }
-}
-
-const saveTasks = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(taskList.value))
 }
 
 const showCreateModal = () => {
   isModalVisible.value = true
-  // 重置表单
   formState.name = ""
   formState.aircraftId = undefined
   formState.routeId = undefined
   formState.description = ""
 }
 
-const handleCreate = () => {
+const handleCreate = async () => {
   if (!formState.name || !formState.aircraftId || !formState.routeId) {
     message.error("请填写完整信息")
     return
@@ -163,22 +197,22 @@ const handleCreate = () => {
   const route = routeOptions.value.find(r => r.value === formState.routeId)
 
   const newTask = {
-    id: Date.now().toString(),
     name: formState.name,
     aircraftId: formState.aircraftId,
     aircraftName: aircraft?.label || "未知机型",
     routeId: formState.routeId,
     routeName: route?.label || "未知航线",
-    description: formState.description,
-    createdAt: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-    status: "pending"
+    description: formState.description
   }
 
-  taskList.value.unshift(newTask)
-  saveTasks()
-  
-  message.success("任务创建成功")
-  isModalVisible.value = false
+  try {
+    await flightTaskApi.createFlightTask(newTask)
+    message.success("任务创建成功")
+    isModalVisible.value = false
+    loadTasks()
+  } catch (e) {
+    message.error("创建失败")
+  }
 }
 
 const executeTask = (record: any) => {
@@ -209,10 +243,42 @@ const executeTask = (record: any) => {
   })
 }
 
-const deleteTask = (id: string) => {
-  taskList.value = taskList.value.filter(t => t.id !== id)
-  saveTasks()
-  message.success("任务删除成功")
+const deleteTask = async (id: string) => {
+  try {
+    await flightTaskApi.deleteFlightTask(id)
+    message.success("任务删除成功")
+    loadTasks()
+  } catch (e) {
+    message.error("删除失败")
+  }
+}
+
+const showAssignRouteModal = (record: any) => {
+  currentTask.value = record
+  assignRouteId.value = undefined
+  isAssignRouteVisible.value = true
+}
+
+const handleAssignRoute = async () => {
+  if (!assignRouteId.value || !currentTask.value) {
+    message.error("请选择航线")
+    return
+  }
+  
+  const route = routeOptions.value.find(r => r.value === assignRouteId.value)
+  if (!route) {
+    message.error("航线不存在")
+    return
+  }
+
+  try {
+    await flightTaskApi.updateFlightTaskRoute(currentTask.value.id, assignRouteId.value, route.label)
+    message.success("航线分配成功")
+    isAssignRouteVisible.value = false
+    loadTasks()
+  } catch (e) {
+    message.error("分配失败")
+  }
 }
 
 onMounted(() => {

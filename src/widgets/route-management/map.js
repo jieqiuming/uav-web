@@ -1,4 +1,5 @@
 import * as mars3d from "mars3d"
+import * as routeApi from "@/api/services/route"
 
 export let map // mars3d.Map三维地图对象
 let graphicLayer
@@ -298,38 +299,36 @@ export function resetSimulation() {
   }
 }
 
+
+// ... (previous code above getSavedRoutes)
+
 // 航线数据管理
-export function getSavedRoutes() {
+export async function getSavedRoutes() {
   try {
-    const routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
+    const routes = await routeApi.getRoutes()
     // 按创建时间倒序排列
-    return routes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    return (routes || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   } catch (error) {
     console.error("读取航线数据失败:", error)
     return []
   }
 }
 
-export function saveRoute(routeData) {
+export async function saveRoute(routeData) {
   try {
-    const routes = getSavedRoutes()
+    // 检查是否已存在同名航线 (Mock Controller doesn't check name uniqueness strictly, but let's trust API)
+    // Actually, current mock controller updates if ID exists.
+    // If we want to maintain checking, we can do it here or just let API handle it.
+    // For simplicity and standard, just call save.
 
-    // 检查是否已存在同名航线
-    const existingIndex = routes.findIndex((route) => route.name === routeData.name)
-    if (existingIndex >= 0) {
-      // 更新现有航线
-      routeData.updatedAt = new Date().toISOString()
-      routes[existingIndex] = routeData
-    } else {
-      // 添加新航线
-      routeData.createdAt = routeData.createdAt || new Date().toISOString()
-      routeData.updatedAt = new Date().toISOString()
-      routes.unshift(routeData) // 添加到开头
+    // Ensure dates
+    if (!routeData.createdAt) {
+      routeData.createdAt = new Date().toISOString()
     }
+    routeData.updatedAt = new Date().toISOString()
 
-    localStorage.setItem("uav_routes", JSON.stringify(routes))
+    await routeApi.saveRoute(routeData)
     console.log("航线保存成功:", routeData.name)
-
     return true
   } catch (error) {
     console.error("保存航线失败:", error)
@@ -337,41 +336,23 @@ export function saveRoute(routeData) {
   }
 }
 
-export function deleteRoute(routeId) {
+export async function deleteRoute(routeId) {
   try {
-    let routes = getSavedRoutes()
-    const originalLength = routes.length
-    routes = routes.filter((route) => route.id !== routeId)
-
-    if (routes.length < originalLength) {
-      localStorage.setItem("uav_routes", JSON.stringify(routes))
-      console.log("航线删除成功:", routeId)
-      return true
-    } else {
-      console.warn("未找到要删除的航线:", routeId)
-      return false
-    }
+    await routeApi.deleteRoute(routeId)
+    console.log("航线删除成功:", routeId)
+    return true
   } catch (error) {
     console.error("删除航线失败:", error)
     return false
   }
 }
 
-export function updateRoute(routeData) {
+export async function updateRoute(routeData) {
   try {
-    const routes = getSavedRoutes()
-    const index = routes.findIndex((route) => route.id === routeData.id)
-
-    if (index >= 0) {
-      routeData.updatedAt = new Date().toISOString()
-      routes[index] = routeData
-      localStorage.setItem("uav_routes", JSON.stringify(routes))
-      console.log("航线更新成功:", routeData.name)
-      return true
-    } else {
-      console.warn("未找到要更新的航线:", routeData.id)
-      return false
-    }
+    routeData.updatedAt = new Date().toISOString()
+    await routeApi.saveRoute(routeData)
+    console.log("航线更新成功:", routeData.name)
+    return true
   } catch (error) {
     console.error("更新航线失败:", error)
     return false
@@ -379,8 +360,8 @@ export function updateRoute(routeData) {
 }
 
 // 航线统计信息
-export function getRouteStatistics() {
-  const routes = getSavedRoutes()
+export async function getRouteStatistics() {
+  const routes = await getSavedRoutes()
   return {
     totalRoutes: routes.length,
     totalWaypoints: routes.reduce((sum, route) => sum + route.waypoints.length, 0),
@@ -403,26 +384,20 @@ export function getRouteStatistics() {
 }
 
 // 批量操作
-export function batchDeleteRoutes(routeIds) {
+export async function batchDeleteRoutes(routeIds) {
   try {
-    let routes = getSavedRoutes()
-    const originalLength = routes.length
-    routes = routes.filter((route) => !routeIds.includes(route.id))
-
-    localStorage.setItem("uav_routes", JSON.stringify(routes))
-    const deletedCount = originalLength - routes.length
-    console.log(`批量删除航线成功，删除了 ${deletedCount} 条航线`)
-
-    return deletedCount
+    await routeApi.batchDeleteRoutes(routeIds)
+    console.log(`批量删除航线成功，ID: ${routeIds}`)
+    return routeIds.length // Assume all deleted
   } catch (error) {
     console.error("批量删除航线失败:", error)
     return 0
   }
 }
 
-export function exportRoutes(routeIds = null) {
+export async function exportRoutes(routeIds = null) {
   try {
-    let routes = getSavedRoutes()
+    let routes = await getSavedRoutes()
 
     if (routeIds && Array.isArray(routeIds)) {
       routes = routes.filter((route) => routeIds.includes(route.id))
@@ -443,8 +418,8 @@ export function exportRoutes(routeIds = null) {
 }
 
 // 搜索和筛选
-export function searchRoutes(keyword) {
-  const routes = getSavedRoutes()
+export async function searchRoutes(keyword) {
+  const routes = await getSavedRoutes()
   if (!keyword || keyword.trim() === "") {
     return routes
   }
@@ -455,12 +430,12 @@ export function searchRoutes(keyword) {
   )
 }
 
-export function filterRoutesByAltitude(minAlt, maxAlt) {
-  const routes = getSavedRoutes()
+export async function filterRoutesByAltitude(minAlt, maxAlt) {
+  const routes = await getSavedRoutes()
   return routes.filter((route) => route.altitude >= minAlt && route.altitude <= maxAlt)
 }
 
-export function filterRoutesBySpeed(minSpeed, maxSpeed) {
-  const routes = getSavedRoutes()
+export async function filterRoutesBySpeed(minSpeed, maxSpeed) {
+  const routes = await getSavedRoutes()
   return routes.filter((route) => route.speed >= minSpeed && route.speed <= maxSpeed)
 }

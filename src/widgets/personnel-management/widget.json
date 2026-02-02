@@ -1,0 +1,8 @@
+{
+    "name": "人员管理",
+    "icon": "peoples",
+    "group": "manage",
+    "component": "index.vue",
+    "openAtStart": false,
+    "supportParams": true
+}

@@ -149,10 +149,12 @@ const importModalVisible = ref(false)
 const routeToDelete = ref<RouteData | null>(null)
 const fileList = ref([])
 const currentFilters = ref<any>({})
-
-// 计算属性
-const routeStatistics = computed(() => {
-  return mapWork.getRouteStatistics()
+const routeStatistics = ref({
+  totalRoutes: 0,
+  totalWaypoints: 0,
+  averageWaypoints: 0,
+  altitudeRange: { min: 0, max: 0 },
+  speedRange: { min: 0, max: 0 }
 })
 
 // Widget控制
@@ -164,9 +166,13 @@ onMounted(() => {
 })
 
 // 数据加载
-const loadRoutes = () => {
-  routes.value = mapWork.getSavedRoutes()
+const loadRoutes = async () => {
+  routes.value = await mapWork.getSavedRoutes()
   applyCurrentFilters()
+  
+  // 更新统计信息
+  routeStatistics.value = await mapWork.getRouteStatistics()
+  
   console.log("加载航线数据:", routes.value)
 }
 
@@ -277,45 +283,6 @@ const editRoute = (route: RouteData) => {
   })
 }
 
-const duplicateRoute = (route: RouteData) => {
-  const newRoute = {
-    ...route,
-    id: Date.now().toString(),
-    name: `${route.name}_副本`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-
-  if (mapWork.saveRoute(newRoute)) {
-    loadRoutes()
-    message.success(`航线 "${route.name}" 已复制`)
-  } else {
-    message.error("复制航线失败")
-  }
-}
-
-const confirmDeleteRoute = (route: RouteData) => {
-  routeToDelete.value = route
-  deleteModalVisible.value = true
-}
-
-const handleDeleteRoute = () => {
-  if (routeToDelete.value) {
-    if (mapWork.deleteRoute(routeToDelete.value.id)) {
-      loadRoutes()
-      if (selectedRoute.value?.id === routeToDelete.value.id) {
-        selectedRoute.value = null
-        mapWork.clearRouteDisplay()
-      }
-      message.success(`航线 "${routeToDelete.value.name}" 已删除`)
-    } else {
-      message.error("删除航线失败")
-    }
-  }
-  deleteModalVisible.value = false
-  routeToDelete.value = null
-}
-
 // 导入导出
 const showImportModal = () => {
   importModalVisible.value = true
@@ -360,7 +327,7 @@ const handleImportRoutes = async () => {
       for (const routeData of importData) {
         if (validateRouteData(routeData)) {
           routeData.id = Date.now().toString() + "_" + importCount
-          if (mapWork.saveRoute(routeData)) {
+          if (await mapWork.saveRoute(routeData)) {
             importCount++
           }
         }
@@ -368,7 +335,7 @@ const handleImportRoutes = async () => {
     } else if (validateRouteData(importData)) {
       // 单个导入
       importData.id = Date.now().toString()
-      if (mapWork.saveRoute(importData)) {
+      if (await mapWork.saveRoute(importData)) {
         importCount = 1
       }
     }
@@ -386,34 +353,6 @@ const handleImportRoutes = async () => {
 
   importModalVisible.value = false
   fileList.value = []
-}
-
-const exportAllRoutes = () => {
-  if (routes.value.length === 0) {
-    message.warning("没有可导出的航线数据")
-    return
-  }
-
-  const exportData = {
-    exportTime: new Date().toISOString(),
-    version: "1.0",
-    routes: routes.value
-  }
-
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-    type: "application/json"
-  })
-
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `uav_routes_${new Date().toISOString().split("T")[0]}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-
-  message.success("航线数据已导出")
 }
 
 // 工具函数
@@ -446,6 +385,36 @@ const formatDateTime = (dateString: string): string => {
   const date = new Date(dateString)
   return date.toLocaleString("zh-CN")
 }
+
+const exportAllRoutes = () => {
+  if (routes.value.length === 0) {
+    message.warning("没有可导出的航线数据")
+    return
+  }
+
+  const exportData = {
+    exportTime: new Date().toISOString(),
+    version: "1.0",
+    routes: routes.value
+  }
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+    type: "application/json"
+  })
+
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `uav_routes_${new Date().toISOString().split("T")[0]}.json`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+
+  message.success("航线数据已导出")
+}
+
+
 </script>
 
 <style scoped lang="less">

@@ -79,6 +79,8 @@ const data: any = [
     children: [
       { name: "飞机管理", icon: "config", widget: "aircraft-management" },
       { name: "设备管理", icon: "components", widget: "device-management" },
+      { name: "人员管理", icon: "peoples", widget: "personnel-management" },
+      { name: "工单管理", icon: "form", widget: "work-order" },
       { name: "航线规划", icon: "move", widget: "route-planning" },
       { name: "任务管理", icon: "editor", widget: "task-management" }
     ]

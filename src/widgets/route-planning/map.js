@@ -1,4 +1,5 @@
 import * as mars3d from "mars3d"
+import * as routeApi from "@/api/services/route"
 
 export let map // mars3d.Map三维地图对象
 let graphicLayer
@@ -497,24 +498,19 @@ export function getSimulationStatus() {
   return 'stopped'
 }
 
-// 保存航线到本地存储
-export function saveRoute(routeData) {
+
+// ... (previous code)
+
+// 保存航线到后端
+export async function saveRoute(routeData) {
   try {
-    const routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
+    // 适配数据结构：后端不需要完整的 routeData 数组，只需要单个对象
+    // 但原逻辑似乎是把整个数组存进去？不，看原逻辑：
+    // routes = get(); existingIndex...; push/update; set()
+    // 现在的 routeApi.saveRoute 是处理单个 RouteModel 的保存（Insert/Update 由 Mock Controller 处理）
 
-    // 检查是否已存在同名航线
-    const existingIndex = routes.findIndex((route) => route.name === routeData.name)
-    if (existingIndex >= 0) {
-      // 更新现有航线
-      routes[existingIndex] = routeData
-    } else {
-      // 添加新航线
-      routes.push(routeData)
-    }
-
-    localStorage.setItem("uav_routes", JSON.stringify(routes))
+    await routeApi.saveRoute(routeData)
     console.log("航线保存成功:", routeData)
-
     return true
   } catch (error) {
     console.error("保存航线失败:", error)
@@ -523,9 +519,10 @@ export function saveRoute(routeData) {
 }
 
 // 获取所有已保存的航线
-export function getSavedRoutes() {
+export async function getSavedRoutes() {
   try {
-    return JSON.parse(localStorage.getItem("uav_routes") || "[]")
+    const list = await routeApi.getRoutes()
+    return list || []
   } catch (error) {
     console.error("读取航线失败:", error)
     return []
@@ -533,11 +530,9 @@ export function getSavedRoutes() {
 }
 
 // 删除航线
-export function deleteRoute(routeId) {
+export async function deleteRoute(routeId) {
   try {
-    let routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
-    routes = routes.filter((route) => route.id !== routeId)
-    localStorage.setItem("uav_routes", JSON.stringify(routes))
+    await routeApi.deleteRoute(routeId)
     console.log("航线删除成功:", routeId)
     return true
   } catch (error) {
