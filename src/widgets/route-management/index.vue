@@ -283,6 +283,41 @@ const editRoute = (route: RouteData) => {
   })
 }
 
+const duplicateRoute = async (route: RouteData) => {
+  try {
+    const newRoute = {
+      ...route,
+      id: Date.now().toString(),
+      name: `${route.name} - 副本`,
+      createdAt: new Date().toISOString()
+    }
+    await mapWork.saveRoute(newRoute)
+    message.success(`航线已复制: ${newRoute.name}`)
+    loadRoutes()
+  } catch (e) {
+    message.error("复制航线失败")
+  }
+}
+
+const confirmDeleteRoute = (route: RouteData) => {
+  routeToDelete.value = route
+  deleteModalVisible.value = true
+}
+
+const handleDeleteRoute = async () => {
+  if (!routeToDelete.value) { return }
+  
+  try {
+    await mapWork.deleteRoute(routeToDelete.value.id)
+    message.success(`航线已删除: ${routeToDelete.value.name}`)
+    deleteModalVisible.value = false
+    routeToDelete.value = null
+    loadRoutes()
+  } catch (e) {
+    message.error("删除航线失败")
+  }
+}
+
 // 导入导出
 const showImportModal = () => {
   importModalVisible.value = true

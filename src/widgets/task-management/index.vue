@@ -237,7 +237,7 @@ const executeTask = (record: any) => {
     name: "flight-demo",
     data: {
       action: "start_task",
-      route: route,
+      route,
       taskId: record.id
     }
   })

@@ -38,7 +38,7 @@ export function drawRoute(routeData) {
     })
 
     const graphic = new mars3d.graphic.PolylineEntity({
-        positions: positions,
+        positions,
         style: {
             width: 5,
             color: "#ff0000",

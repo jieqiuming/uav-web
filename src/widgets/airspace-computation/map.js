@@ -112,7 +112,7 @@ export function analyzeRouteConflict(routeData) {
 
     const routeGraphic = new mars3d.graphic.PolylineEntity({
         id: "currentRoute",
-        positions: positions,
+        positions,
         style: {
             width: 5,
             color: "#3388ff",

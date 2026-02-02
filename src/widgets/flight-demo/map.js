@@ -165,7 +165,7 @@ export function updateRoutePaths(routeData) {
     name: routeData.name || "飞行任务",
     position: {
       type: "time",
-      speed: speed,
+      speed,
       startTime: map.clock.currentTime.toString(), // 从当前时间开始
       list: positions
     },

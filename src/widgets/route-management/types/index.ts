@@ -1,14 +1,18 @@
 // 航线管理相关的类型定义
 
 export interface RouteData {
-  id: string
+  id: string | number
   name: string
-  speed: number
-  altitude: number
+  speed?: number
+  altitude?: number
   description?: string
-  waypoints: number[][]
-  createdAt: string
-  updatedAt: string
+  waypoints?: number[][]
+  positions?: any[] // 兼容 API 返回的 RouteModel
+  distance?: number
+  estimatedTime?: number
+  createdAt?: string
+  updatedAt?: string
+  [key: string]: any
 }
 
 export interface RouteStatistics {

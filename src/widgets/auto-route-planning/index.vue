@@ -155,7 +155,6 @@
                   </div>
                   <div v-else class="empty-placeholder">
                     <p>点击按钮生成障碍物，系统将自动基于起点终点计算最优避障路径。</p>
-                    <img src="/img/textures/path-demo.png" style="width: 300px; opacity: 0.3;" v-if="false" />
                   </div>
                 </a-card>
               </a-col>
@@ -261,7 +260,7 @@ const runSmartPlanning = () => {
   
   // 模拟计算结果
   smartPlanningResult.value = {
-    points: points,
+    points,
     distance: (mars3d.MeasureUtil.getDistance(points)).toFixed(2)
   }
 }
