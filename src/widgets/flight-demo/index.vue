@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog v-model:visible="isActivate" width="330" right="10" top="200">
+  <mars-dialog v-model:visible="isActivate" width="300" left="10" top="120">
     <div class="f-mb">
       <a-row :gutter="[0, 10]">
         <a-col :span="8">飞行视角:</a-col>
@@ -82,7 +82,7 @@
       </div>
     </div>
   </mars-dialog>
-  <fixedRoute-info top="500"/>
+  <fixedRoute-info/>
 </template>
 
 <script setup lang="ts">

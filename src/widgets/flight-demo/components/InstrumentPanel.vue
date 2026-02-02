@@ -12,22 +12,32 @@
     </div>
 
     <!-- 姿态仪 (人工地平仪) -->
-    <div class="instrument attitude">
-      <div class="horizon-container">
-        <div class="horizon" :style="horizonStyle">
-          <div class="sky"></div>
-          <div class="ground"></div>
-          <div class="line"></div>
-        </div>
-        <div class="reference-plane">
-          <svg viewBox="0 0 100 100">
-             <path d="M 10 50 L 40 50 L 50 60 L 60 50 L 90 50" stroke="#ffff00" stroke-width="2" fill="none" />
+    <div class="instrument attitude-wrapper">
+      <div class="attitude-indicator">
+        <div class="horizon-container">
+          <div class="horizon" :style="horizonStyle">
+            <div class="sky"></div>
+            <div class="ground"></div>
+            <div class="horizon-line"></div>
+          </div>
+          <!-- 固定参考线 -->
+          <svg class="reference-plane" viewBox="0 0 100 100">
+            <path d="M 15 50 L 38 50 L 50 58 L 62 50 L 85 50" stroke="#ff9900" stroke-width="2.5" fill="none" />
+            <circle cx="50" cy="50" r="3" fill="#ff9900" />
+          </svg>
+          <!-- 刻度圈 -->
+          <svg class="scale-ring" viewBox="0 0 100 100">
+            <line x1="50" y1="5" x2="50" y2="10" stroke="#fff" stroke-width="1.5" />
+            <line x1="5" y1="50" x2="10" y2="50" stroke="#fff" stroke-width="1.5" />
+            <line x1="90" y1="50" x2="95" y2="50" stroke="#fff" stroke-width="1.5" />
+            <line x1="50" y1="90" x2="50" y2="95" stroke="#fff" stroke-width="1.5" />
           </svg>
         </div>
       </div>
-      <div class="value-overlay">
-        <div>R: {{ Math.round(roll) }}°</div>
-        <div>P: {{ Math.round(pitch) }}°</div>
+      <!-- R/P 值显示在外部 -->
+      <div class="attitude-values">
+        <span class="att-badge roll">R: {{ Math.round(roll) }}°</span>
+        <span class="att-badge pitch">P: {{ Math.round(pitch) }}°</span>
       </div>
     </div>
 
@@ -76,16 +86,16 @@ const horizonStyle = computed(() => {
 <style scoped lang="less">
 .instrument-panel {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   width: 100%;
-  padding: 10px 0;
+  padding: 8px 5px;
 }
 
 .instrument {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -93,22 +103,22 @@ const horizonStyle = computed(() => {
   color: #fff;
   
   .label {
-    font-size: 10px;
+    font-size: 9px;
     color: #aaa;
     position: absolute;
-    top: 20px;
+    top: 14px;
   }
   
   .value {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: bold;
     z-index: 2;
   }
   
   .unit {
-    font-size: 10px;
+    font-size: 8px;
     position: absolute;
-    bottom: 20px;
+    bottom: 14px;
     color: #aaa;
   }
   
@@ -121,77 +131,116 @@ const horizonStyle = computed(() => {
   }
 }
 
-.attitude {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid #555;
-  background: #333;
-  position: relative;
+// 姿态仪包装器
+.attitude-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: auto !important;
+  height: auto !important;
   
-  .horizon-container {
-    width: 100%;
-    height: 100%;
+  .attitude-indicator {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #444;
+    box-shadow: 0 0 8px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.3);
+    background: #1a1a1a;
     position: relative;
-  }
-  
-  .horizon {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    transition: transform 0.1s;
     
-    .sky {
+    .horizon-container {
       width: 100%;
-      height: 200%;
-      background: #00bfff;
-      position: absolute;
-      bottom: 50%;
-      left: 0;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      border-radius: 50%;
     }
     
-    .ground {
-      width: 100%;
-      height: 200%;
-      background: #8b4513; // Brown
+    .horizon {
+      width: 150%;
+      height: 150%;
       position: absolute;
-      top: 50%;
-      left: 0;
+      left: -25%;
+      top: -25%;
+      transition: transform 0.1s ease-out;
+      
+      .sky {
+        width: 100%;
+        height: 50%;
+        background: linear-gradient(to bottom, #0066cc 0%, #00aaff 100%);
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      
+      .ground {
+        width: 100%;
+        height: 50%;
+        background: linear-gradient(to bottom, #8B5A2B 0%, #5D3A1A 100%);
+        position: absolute;
+        bottom: 0;
+        left: 0;
+      }
+      
+      .horizon-line {
+        width: 100%;
+        height: 2px;
+        background: #fff;
+        position: absolute;
+        top: 50%;
+        left: 0;
+        margin-top: -1px;
+        box-shadow: 0 0 4px rgba(255,255,255,0.5);
+      }
     }
     
-    .line {
-      width: 100%;
-      height: 2px;
-      background: white;
+    .reference-plane {
       position: absolute;
-      top: 50%;
+      top: 0;
       left: 0;
-      margin-top: -1px;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    .scale-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 11;
+      pointer-events: none;
     }
   }
   
-  .reference-plane {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;
-  }
-  
-  .value-overlay {
-    position: absolute;
-    bottom: 5px;
-    left: 0;
-    width: 100%;
+  // R/P 值徽章
+  .attitude-values {
     display: flex;
-    justify-content: space-around;
-    font-size: 10px;
-    text-shadow: 1px 1px 2px black;
-    z-index: 20;
+    gap: 6px;
+    margin-top: 5px;
+    
+    .att-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Consolas', monospace;
+      
+      &.roll {
+        background: rgba(0, 150, 255, 0.3);
+        color: #4fc3f7;
+        border: 1px solid rgba(0, 150, 255, 0.4);
+      }
+      
+      &.pitch {
+        background: rgba(255, 150, 0, 0.3);
+        color: #ffb74d;
+        border: 1px solid rgba(255, 150, 0, 0.4);
+      }
+    }
   }
 }
 </style>

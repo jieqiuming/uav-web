@@ -1,18 +1,18 @@
 <template>
   <div class="fixedRoute-info-wrapper">
-    <div class="flight-dashboard" style="min-height: 200px">
-      <!-- 进度条 -->
-      <div class="progress-section">
-        <div class="progress-bar-container">
-          <div class="p-label" style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #aaa;">
-            <span>任务进度</span>
-            <span>{{ formState.percent }}%</span>
-          </div>
-          <a-progress :percent="formState.percent" :show-info="false" stroke-color="#52c41a" trail-color="rgba(255,255,255,0.1)" />
-        </div>
+    <div class="flight-dashboard">
+      <!-- 标题栏 -->
+      <div class="dashboard-header">
+        <span class="title">🛩️ 飞行监控</span>
+        <span class="progress-text">{{ formState.percent }}%</span>
       </div>
       
-      <!-- 仪表盘区域 -->
+      <!-- 进度条 -->
+      <div class="progress-bar">
+        <a-progress :percent="formState.percent" :show-info="false" stroke-color="#52c41a" trail-color="rgba(255,255,255,0.1)" size="small" />
+      </div>
+      
+      <!-- 仪表盘区域 - 紧凑版 -->
       <div class="dashboard-instruments">
         <InstrumentPanel 
           :speed="formState.speed" 
@@ -23,36 +23,32 @@
         />
       </div>
 
-      <!-- 数据统计区域 -->
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-value">{{ formState.td_length || '0米' }}</div>
-          <div class="stat-label">已飞距离</div>
+      <!-- 数据统计区域 - 横向排列 -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-value">{{ formState.td_length || '0m' }}</span>
+          <span class="stat-label">已飞</span>
         </div>
-        <div class="stat-box">
-          <div class="stat-value">{{ formState.td_times || '00:00:00' }}</div>
-          <div class="stat-label">已飞时间</div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ formState.td_times || '0:00' }}</span>
+          <span class="stat-label">时间</span>
         </div>
-        <div class="stat-box secondary">
-          <div class="stat-value small">{{ formState.td_alllength || '0米' }}</div>
-          <div class="stat-label">总距离</div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ formState.td_alllength || '0m' }}</span>
+          <span class="stat-label">总距</span>
         </div>
-        <div class="stat-box secondary">
-          <div class="stat-value small">{{ formState.td_alltimes || '00:00:00' }}</div>
-          <div class="stat-label">预计总时</div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ Math.round(formState.altitude) }}m</span>
+          <span class="stat-label">高度</span>
         </div>
       </div>
     
-      <!-- 位置信息（折叠或简化显示）-->
+      <!-- 坐标信息 -->
       <div class="position-bar">
-        <div class="pos-item">
-          <mars-icon icon="local" width="14" color="#1890ff"/>
-          <span>{{ formState.td_jd ? Number(formState.td_jd).toFixed(6) : '-' }}, {{ formState.td_wd ? Number(formState.td_wd).toFixed(6) : '-' }}</span>
-        </div>
-        <div class="pos-item">
-          <mars-icon icon="send-plane" width="14" color="#1890ff"/>
-          <span>AGL: {{ formState.td_gd || '0米' }}</span>
-        </div>
+        <span>📍 {{ formState.td_jd ? Number(formState.td_jd).toFixed(5) : '-' }}, {{ formState.td_wd ? Number(formState.td_wd).toFixed(5) : '-' }}</span>
       </div>
     </div>
   </div>
@@ -109,7 +105,6 @@ let eventHandlerEnd: any
 let eventHandlerFlightEnd: any
 
 onMounted(() => {
-  debugger
   console.log("FixedRouteInfo mounted", mapWork.fixedRoute)
   if (mapWork.fixedRoute?.info) {
     showInfo(mapWork.fixedRoute.info)
@@ -190,91 +185,101 @@ export default {
 </script>
 
 <style scoped lang="less">
-// 仪表盘容器定位
+// 仪表盘容器定位 - 右下角
 .fixedRoute-info-wrapper {
   position: fixed;
   right: 10px;
   bottom: 60px;
-  width: 360px;
+  width: 340px;
   z-index: 1000;
 }
 
 .flight-dashboard {
-  padding: 0 5px;
-  background: rgba(19, 24, 35, 0.85);
-  backdrop-filter: blur(8px);
-  border-radius: 4px;
-  padding-top: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 9999;
-  position: relative;
+  background: rgba(15, 20, 30, 0.92);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   
-  .progress-section {
-    margin-bottom: 20px;
-    background: rgba(0,0,0,0.2);
-    padding: 10px;
-    border-radius: 4px;
-  }
-  
-  .dashboard-instruments {
-    margin-bottom: 20px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
+  // 标题栏
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
     
-    .stat-box {
-      background: rgba(0,0,0,0.4);
-      padding: 15px 10px;
-      border-radius: 4px;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+    
+    .progress-text {
+      font-size: 14px;
+      font-weight: bold;
+      color: #52c41a;
+    }
+  }
+  
+  // 进度条
+  .progress-bar {
+    margin-bottom: 10px;
+  }
+  
+  // 仪表盘区域 - 紧凑
+  .dashboard-instruments {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 10px;
+    padding: 5px;
+  }
+  
+  // 横向统计栏
+  .stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    padding: 10px 8px;
+    margin-bottom: 8px;
+    
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       
       .stat-value {
-        font-size: 20px;
+        font-size: 14px;
         font-weight: 600;
         color: #fff;
-        line-height: 1.2;
-        margin-bottom: 4px;
-        font-family: "Helvetica Neue", Arial, sans-serif;
-        
-        &.small {
-          font-size: 16px;
-          color: #ccc;
-        }
+        font-family: 'Consolas', monospace;
       }
       
       .stat-label {
-        font-size: 12px;
-        color: #999;
+        font-size: 10px;
+        color: #888;
+        margin-top: 2px;
       }
-      
-      &.secondary {
-        background: rgba(0,0,0,0.2);
-      }
+    }
+    
+    .stat-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
     }
   }
   
+  // 坐标栏
   .position-bar {
-    display: flex;
-    justify-content: space-between;
-    background: rgba(0,0,0,0.2);
-    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
     border-radius: 4px;
-    font-size: 12px;
-    color: #bbb;
-    
-    .pos-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    font-size: 11px;
+    color: #888;
+    text-align: center;
   }
 }
 </style>
