@@ -46,6 +46,7 @@ import * as aircraftApi from "@/api/services/aircraft"
 import * as personnelApi from "@/api/services/personnel"
 import * as flightTaskApi from "@/api/services/flight-task"
 import * as routeApi from "@/api/services/route"
+import * as airspaceApi from "@/api/services/airspace"
 import { message } from 'ant-design-vue'
 
 const props = defineProps<{
@@ -133,7 +134,7 @@ const handleOk = async () => {
     const pilot = pilotList.value.find(p => p.id === selectedPilot.value)
     const route = selectedRoute.value ? routeList.value.find(r => r.id === selectedRoute.value) : null
     
-    await flightTaskApi.createFlightTask({
+    const newTask = await flightTaskApi.createFlightTask({
       name: `${props.workOrder.title}-执行任务`,
       workOrderId: props.workOrder.id,
       workOrderNo: props.workOrder.no,
@@ -146,6 +147,20 @@ const handleOk = async () => {
       description: `基于工单 ${props.workOrder.no} 自动创建`,
       status: 'pending'
     })
+    
+    // 4. 自动创建空域申请
+    if (route) {
+      await airspaceApi.createAirspaceTask({
+        name: `${props.workOrder.title}-空域申请`,
+        startTime: new Date().toISOString(),
+        routeName: route.name,
+        routeId: route.id,
+        algorithm: 'general_person_vehicle_detection',
+        description: `基于工单 ${props.workOrder.no} 自动生成的空域申请`,
+        flightTaskId: newTask?.id,
+        workOrderId: props.workOrder.id
+      })
+    }
     
     emit('success')
   } catch (e) {

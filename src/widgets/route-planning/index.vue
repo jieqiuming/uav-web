@@ -141,7 +141,7 @@ import type { RouteForm, Waypoint, PlanningState, RouteData, SimulationOptions }
 useLifecycle(mapWork)
 
 // Widget控制
-const { disable, currentWidget } = useWidget()
+const { disable, activate, currentWidget } = useWidget()
 
 // 响应式数据
 const routeForm = reactive<RouteForm>({
@@ -356,6 +356,15 @@ const saveRoute = async () => {
   const success = await mapWork.saveRoute(routeData)
   if (success) {
     message.success(isEditing ? '航线更新成功' : '航线保存成功')
+    
+    // 提示用户进行空域计算
+    setTimeout(() => {
+      message.info({
+        content: '建议对新航线进行空域安全检测，点击“空域计算”菜单即可分析',
+        duration: 5
+      })
+    }, 500)
+    
     // 重置状态
     resetPlanning()
   } else {
