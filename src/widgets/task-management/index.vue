@@ -238,7 +238,8 @@ const executeTask = (record: any) => {
     data: {
       action: "start_task",
       route,
-      taskId: record.id
+      taskId: record.id,
+      pilotId: record.pilotId // 传递飞手ID，用于任务完成后恢复状态
     }
   })
 }

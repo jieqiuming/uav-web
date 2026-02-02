@@ -99,10 +99,17 @@
               <div class="resource-item">
                 <div class="resource-icon task">📋</div>
                 <div class="resource-info">
-                  <div class="resource-label">关联任务</div>
-                  <div class="resource-value">
-                    {{ workOrder.flightTaskId ? `任务 #${workOrder.flightTaskId.slice(-6)}` : '暂无' }}
+                  <div class="resource-label">关联飞行任务</div>
+                  <div class="resource-value" v-if="linkedTask">
+                    <span class="task-name">{{ linkedTask.name }}</span>
+                    <a-tag :color="getTaskStatusColor(linkedTask.status)" size="small">
+                      {{ getTaskStatusLabel(linkedTask.status) }}
+                    </a-tag>
                   </div>
+                  <div class="resource-value empty" v-else-if="loadingTask">
+                    加载中...
+                  </div>
+                  <div class="resource-value empty" v-else>暂无关联任务</div>
                 </div>
               </div>
             </div>
@@ -128,6 +135,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { WorkOrder } from "@/api/services/work-order"
+import * as flightTaskApi from "@/api/services/flight-task"
+import type { FlightTask } from "@/api/services/flight-task"
 
 const props = defineProps<{
   visible: boolean
@@ -135,6 +144,26 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:visible', 'edit'])
+
+// 关联任务数据
+const linkedTask = ref<FlightTask | null>(null)
+const loadingTask = ref(false)
+
+// 监听 visible 和 workOrder 变化，加载关联任务
+watch([() => props.visible, () => props.workOrder?.id], async ([visible, orderId]) => {
+  linkedTask.value = null
+  if (visible && orderId) {
+    loadingTask.value = true
+    try {
+      const result = await flightTaskApi.getFlightTaskList({})
+      linkedTask.value = result.data.find((t: FlightTask) => t.workOrderId === orderId) || null
+    } catch (e) {
+      console.error('加载关联任务失败', e)
+    } finally {
+      loadingTask.value = false
+    }
+  }
+}, { immediate: true })
 
 const handleCancel = () => {
   emit('update:visible', false)
@@ -173,6 +202,17 @@ const getStatusColor = (status: string) => {
 const getPriorityLabel = (p: string) => {
   const map: any = { low: '低', medium: '中', high: '高', critical: '紧急' }
   return map[p] || p
+}
+
+// 任务状态映射
+const getTaskStatusLabel = (status: string) => {
+  const map: any = { pending: '待执行', executing: '执行中', completed: '已完成', failed: '失败' }
+  return map[status] || status
+}
+
+const getTaskStatusColor = (status: string) => {
+  const map: any = { pending: 'orange', executing: 'blue', completed: 'green', failed: 'red' }
+  return map[status] || 'default'
 }
 </script>
 

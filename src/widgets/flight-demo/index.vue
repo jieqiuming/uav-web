@@ -95,6 +95,7 @@ import useLifecycle from "@mars/common/uses/use-lifecycle"
 import { useWidget } from "@mars/common/store/widget"
 
 import * as flightTaskApi from "@/api/services/flight-task"
+import * as personnelApi from "@/api/services/personnel"
 
 // 启用map.ts生命周期
 useLifecycle(mapWork)
@@ -102,12 +103,16 @@ useLifecycle(mapWork)
 const { isActivate, activate, currentWidget } = useWidget()
 
 const currentTaskId = ref<string>("")
+const currentPilotId = ref<string>("") // 飞手 ID，用于任务完成后恢复状态
 
 // 监听Widget激活事件，处理参数传递
 currentWidget.onUpdate((widget: any) => {
   if (widget && widget.data) {
     if (widget.data.taskId) {
       currentTaskId.value = widget.data.taskId
+    }
+    if (widget.data.pilotId) {
+      currentPilotId.value = widget.data.pilotId
     }
     if (widget.data.route) {
        console.log('接收到飞行任务数据:', widget.data)
@@ -151,10 +156,17 @@ onMounted(() => {
 
 const updateTaskStatus = async (taskId: string) => {
   try {
+    // 1. 更新任务状态为已完成
     await flightTaskApi.updateFlightTaskStatus(taskId, 'completed')
     message.success("关联任务状态已更新为完成")
+    
+    // 2. 恢复飞手状态为空闲
+    if (currentPilotId.value) {
+      await personnelApi.updatePilotStatus(currentPilotId.value, 'idle')
+      message.success("飞手状态已恢复为空闲")
+    }
   } catch (e) {
-    console.error("更新任务状态失败", e)
+    console.error("更新状态失败", e)
   }
 }
 
