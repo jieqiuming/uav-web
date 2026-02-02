@@ -79,10 +79,11 @@
         <mars-button class="pause-btn" v-show="formState.isStart && !formState.isPause" @click="btnPause">暂停</mars-button>
         <mars-button class="proceed-btn" v-show="formState.isStart && formState.isPause" @click="btnProceed">继续</mars-button>
         <mars-button class="stop-btn" v-show="formState.isStart" @click="btnStop">停止</mars-button>
+        <mars-button class="close-btn" @click="closeFlightDemo">关闭</mars-button>
       </div>
     </div>
   </mars-dialog>
-  <fixedRoute-info/>
+  <fixedRoute-info v-if="isActivate"/>
 </template>
 
 <script setup lang="ts">
@@ -100,10 +101,24 @@ import * as personnelApi from "@/api/services/personnel"
 // 启用map.ts生命周期
 useLifecycle(mapWork)
 // Widget状态管理
-const { isActivate, activate, currentWidget } = useWidget()
+const { isActivate, activate, disable, currentWidget } = useWidget()
 
 const currentTaskId = ref<string>("")
 const currentPilotId = ref<string>("") // 飞手 ID，用于任务完成后恢复状态
+
+// 关闭飞行演示
+const closeFlightDemo = () => {
+  // 如果正在飞行，先停止
+  if (formState.isStart) {
+    mapWork.fixedRoute?.stop()
+    formState.isStart = false
+    formState.isPause = false
+  }
+  // 关闭 widget (直接设置 visible 为 false)
+  if (currentWidget && currentWidget.widget) {
+    currentWidget.widget.visible = false
+  }
+}
 
 // 监听Widget激活事件，处理参数传递
 currentWidget.onUpdate((widget: any) => {
@@ -138,6 +153,10 @@ onMounted(() => {
     if (currentTaskId.value) {
       updateTaskStatus(currentTaskId.value)
     }
+    
+    // 重置飞行状态
+    formState.isStart = false
+    formState.isPause = false
   })
 
   // 监听外部数据更新
