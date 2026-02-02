@@ -451,38 +451,140 @@ const loadEditRoute = (route: RouteData) => {
 </script>
 
 <style scoped lang="less">
+// 暗色主题变量
+@bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+@bg-card: rgba(255, 255, 255, 0.05);
+@border-color: rgba(255, 255, 255, 0.1);
+@text-primary: #e8edf3;
+@text-secondary: #b8c5d6;
+@text-muted: #8b9cb5;
+@accent-color: #1890ff;
+
 .route-settings {
+  padding: 15px;
+  background: @bg-gradient;
+  min-height: 100%;
+  
   .action-buttons {
     display: flex;
     justify-content: space-between;
     margin-top: 20px;
     gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid @border-color;
+  }
+  
+  // 表单暗色样式
+  :deep(.ant-form) {
+    .ant-form-item-label > label {
+      color: @text-secondary;
+    }
+    
+    .ant-input,
+    .ant-input-textarea textarea {
+      background: rgba(0, 0, 0, 0.3) !important;
+      border-color: @border-color !important;
+      color: @text-primary !important;
+      
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+      
+      &:focus, &:hover {
+        border-color: @accent-color;
+      }
+    }
+    
+    // InputNumber 完整样式
+    .ant-input-number {
+      background: rgba(0, 0, 0, 0.3) !important;
+      border-color: @border-color !important;
+      
+      .ant-input-number-input {
+        color: @text-primary !important;
+        background: transparent !important;
+        
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+      }
+      
+      .ant-input-number-handler-wrap {
+        background: rgba(0, 0, 0, 0.2);
+        border-color: @border-color;
+        
+        .ant-input-number-handler {
+          border-color: @border-color;
+          
+          .anticon {
+            color: @text-muted;
+          }
+          
+          &:hover .anticon {
+            color: @accent-color;
+          }
+        }
+      }
+      
+      &:focus, &:hover {
+        border-color: @accent-color !important;
+      }
+    }
+    
+    .ant-input-number-group-addon {
+      background: rgba(0, 0, 0, 0.2) !important;
+      border-color: @border-color !important;
+      color: @text-secondary !important;
+    }
   }
 }
 
 .waypoint-editing {
+  padding: 15px;
+  background: @bg-gradient;
+  min-height: 100%;
+  
   .editing-header {
     margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 16px;
+    background: @bg-card;
+    border-radius: 10px;
+    border: 1px solid @border-color;
     
     h3 {
-      margin: 0 0 5px 0;
-      color: #1890ff;
+      margin: 0 0 6px 0;
+      color: @accent-color;
+      font-weight: 600;
     }
     
     p {
       margin: 0;
-      color: #666;
+      color: @text-muted;
       font-size: 12px;
     }
   }
   
-
-  
   .editing-actions {
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid @border-color;
     padding-top: 15px;
+    margin-top: 15px;
+  }
+}
+
+// 仿真控制按钮样式
+:deep(.simulation-controls) {
+  .ant-btn {
+    border-color: @border-color;
+    
+    &:not(.ant-btn-primary) {
+      background: rgba(0, 0, 0, 0.2);
+      color: @text-secondary;
+      
+      &:hover {
+        border-color: @accent-color;
+        color: @accent-color;
+      }
+    }
   }
 }
 </style>

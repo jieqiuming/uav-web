@@ -84,11 +84,19 @@ const showDetails = () => {
 </script>
 
 <style scoped lang="less">
+// 暗色主题变量
+@text-primary: #e8edf3;
+@text-secondary: #b8c5d6;
+@text-muted: #8b9cb5;
+@bg-card: rgba(255, 255, 255, 0.05);
+@border-color: rgba(255, 255, 255, 0.1);
+@accent-color: #1890ff;
+
 .route-statistics {
   h4 {
     margin: 0 0 15px 0;
     font-size: 14px;
-    color: #333;
+    color: @text-primary;
   }
   
   .stats-grid {
@@ -100,35 +108,37 @@ const showDetails = () => {
     .stat-card {
       display: flex;
       align-items: center;
-      background: #f8f9fa;
-      border-radius: 6px;
-      padding: 10px;
+      background: @bg-card;
+      border: 1px solid @border-color;
+      border-radius: 8px;
+      padding: 12px;
       transition: all 0.2s ease;
       
       &:hover {
-        background: #e9ecef;
+        background: rgba(24, 144, 255, 0.1);
+        border-color: @accent-color;
       }
       
       .stat-icon {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 16px;
-        margin-right: 10px;
+        margin-right: 12px;
         
         &.total {
-          background: #e6f7ff;
+          background: rgba(24, 144, 255, 0.2);
         }
         
         &.waypoints {
-          background: #f6ffed;
+          background: rgba(82, 196, 26, 0.2);
         }
         
         &.average {
-          background: #fff7e6;
+          background: rgba(250, 173, 20, 0.2);
         }
       }
       
@@ -136,31 +146,32 @@ const showDetails = () => {
         flex: 1;
         
         .stat-value {
-          font-size: 18px;
+          font-size: 20px;
           font-weight: 600;
-          color: #333;
+          color: @text-primary;
           line-height: 1;
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
         
         .stat-label {
           font-size: 11px;
-          color: #666;
+          color: @text-muted;
         }
       }
     }
   }
   
   .range-stats {
-    background: #fafafa;
-    border-radius: 4px;
-    padding: 10px;
+    background: @bg-card;
+    border: 1px solid @border-color;
+    border-radius: 6px;
+    padding: 12px;
     margin-bottom: 10px;
     
     .range-item {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
       
       &:last-child {
         margin-bottom: 0;
@@ -168,12 +179,12 @@ const showDetails = () => {
       
       .range-label {
         font-size: 12px;
-        color: #666;
+        color: @text-muted;
       }
       
       .range-value {
         font-size: 12px;
-        color: #333;
+        color: @text-primary;
         font-weight: 500;
       }
     }
@@ -182,10 +193,11 @@ const showDetails = () => {
   .quick-actions {
     text-align: center;
     
-    .ant-btn {
+    :deep(.ant-btn) {
       padding: 0;
       height: auto;
       font-size: 11px;
+      color: @accent-color;
     }
   }
 }

@@ -454,21 +454,27 @@ const exportAllRoutes = () => {
 
 <style scoped lang="less">
 .route-management {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 15px;
+  min-height: 100%;
+  
   .toolbar {
     margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .route-list {
     margin-top: 15px;
-    height: 500px;
+    height: 400px;
     overflow-y: auto;
 
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      color: #999;
+      color: #8b9cb5;
 
       .empty-icon {
         font-size: 48px;
@@ -477,68 +483,77 @@ const exportAllRoutes = () => {
 
       .empty-text {
         font-size: 16px;
+        color: #b8c5d6;
         margin-bottom: 5px;
       }
 
       .empty-hint {
         font-size: 12px;
+        color: #6b7a8f;
       }
     }
 
     .route-items {
       .route-item {
-        border: 1px solid #f0f0f0;
-        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
         margin-bottom: 10px;
         transition: all 0.3s ease;
 
         &:hover {
           border-color: #1890ff;
-          box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+          background: rgba(24, 144, 255, 0.1);
+          box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
         }
 
         &.active {
           border-color: #1890ff;
-          background-color: #f6ffed;
+          background: rgba(24, 144, 255, 0.15);
         }
 
         .route-header {
-          padding: 12px;
+          padding: 14px 16px;
           cursor: pointer;
 
           .route-name {
             font-size: 16px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 5px;
+            font-weight: 600;
+            color: #e8edf3;
+            margin-bottom: 6px;
           }
 
           .route-meta {
             display: flex;
             justify-content: space-between;
             font-size: 12px;
-            color: #666;
+            color: #8b9cb5;
 
             .waypoint-count {
-              background: #e6f7ff;
-              color: #1890ff;
-              padding: 2px 6px;
-              border-radius: 3px;
+              background: rgba(24, 144, 255, 0.2);
+              color: #69b1ff;
+              padding: 2px 8px;
+              border-radius: 4px;
+              font-weight: 500;
+            }
+            
+            .route-date {
+              color: #6b7a8f;
             }
           }
         }
 
         .route-details {
-          border-top: 1px solid #f0f0f0;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
 
           .route-info {
-            padding: 12px;
-            background: #fafafa;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.2);
           }
 
           .route-actions {
-            padding: 12px;
-            background: #fff;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.1);
           }
         }
       }
@@ -547,16 +562,49 @@ const exportAllRoutes = () => {
 }
 
 .warning-text {
-  color: #ff4d4f;
+  color: #ff6b6b;
   font-size: 12px;
   margin: 0;
 }
 
-:deep(.ant-descriptions-item-label) {
-  font-weight: 500;
+// Descriptions 暗色样式
+:deep(.ant-descriptions) {
+  .ant-descriptions-item-label {
+    font-weight: 500;
+    color: #8b9cb5;
+    background: transparent;
+  }
+  
+  .ant-descriptions-item-content {
+    color: #e8edf3;
+    background: transparent;
+  }
+  
+  .ant-descriptions-row {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  
+  &.ant-descriptions-bordered {
+    .ant-descriptions-view {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .ant-descriptions-item-label,
+    .ant-descriptions-item-content {
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+  }
 }
 
+// Upload 暗色样式
 :deep(.ant-upload-drag) {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+  
+  &:hover {
+    border-color: #1890ff;
+  }
+  
   .ant-upload-drag-icon {
     margin-bottom: 16px;
 
@@ -564,6 +612,32 @@ const exportAllRoutes = () => {
       font-size: 48px;
       color: #1890ff;
     }
+  }
+  
+  .ant-upload-text {
+    color: #b8c5d6;
+  }
+  
+  .ant-upload-hint {
+    color: #6b7a8f;
+  }
+}
+
+// Modal 暗色样式
+:deep(.ant-modal-content) {
+  background: #1a1a2e;
+  
+  .ant-modal-header {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.1);
+    
+    .ant-modal-title {
+      color: #e8edf3;
+    }
+  }
+  
+  .ant-modal-body {
+    color: #b8c5d6;
   }
 }
 </style>

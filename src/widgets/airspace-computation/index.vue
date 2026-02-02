@@ -2,13 +2,13 @@
   <mars-dialog v-model:visible="isActivate" title="空域计算 - 智能分析" :width="1400" :height="750" top="100px" left="100px">
     <div class="airspace-computation">
       <a-tabs v-model:activeKey="activeTab">
-        <!-- 核心功能：航线冲突分析 -->
         <a-tab-pane key="analysis" tab="航线冲突分析">
           <div class="analysis-panel">
             <a-row :gutter="16">
               <a-col :span="8">
-                <a-card title="分析设置" size="small">
-                  <a-form layout="vertical">
+                <div class="dark-card">
+                  <div class="card-title">分析设置</div>
+                  <a-form layout="vertical" class="dark-form">
                     <a-form-item label="选择航线">
                       <a-select 
                         v-model:value="selectedRouteId" 
@@ -34,9 +34,10 @@
                       开始分析
                     </a-button>
                   </a-form>
-                </a-card>
+                </div>
 
-                <a-card title="分析结果" size="small" style="margin-top: 16px">
+                <div class="dark-card" style="margin-top: 16px">
+                  <div class="card-title">分析结果</div>
                   <div v-if="!analysisResult" class="empty-result">
                     <a-empty description="请选择航线并运行分析" />
                   </div>
@@ -48,16 +49,19 @@
                       style="margin-bottom: 16px"
                     />
 
-                    <div style="max-height: 250px; overflow-y: auto;">
+                    <div class="result-list">
                       <a-list item-layout="horizontal" :data-source="analysisResult" v-if="analysisResult.length > 0">
                         <template #renderItem="{ item }">
                           <a-list-item>
-                            <a-list-item-meta :description="item.description">
+                            <a-list-item-meta>
                               <template #title>
-                                <span style="color: #ff4d4f">
+                                <span class="conflict-title">
                                   <mars-icon icon="attention" width="14"/> 
                                   {{ item.zoneName }}
                                 </span>
+                              </template>
+                              <template #description>
+                                <span class="conflict-desc">{{ item.description }}</span>
                               </template>
                             </a-list-item-meta>
                           </a-list-item>
@@ -65,21 +69,30 @@
                       </a-list>
                     </div>
                   </div>
-                </a-card>
+                </div>
               </a-col>
               <a-col :span="16">
-                 <a-card title="空域状态说明" size="small">
-                   <a-descriptions bordered size="small" :column="1">
-                     <a-descriptions-item label="当前区域">安徽省无为市中心城区</a-descriptions-item>
-                     <a-descriptions-item label="红色覆盖">静态禁飞区（行政、工业敏感区）</a-descriptions-item>
-                     <a-descriptions-item label="检测算法">球面几何碰撞检测 (Spherical Collision)</a-descriptions-item>
-                   </a-descriptions>
-                   <div style="margin-top: 10px; padding: 10px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 4px;">
-                     <p style="font-size: 12px; color: #856404; margin-bottom: 0;">
-                       <b>小贴士：</b> 分析完成后，地图将自动根据航点位置进行染色。红色点表示该航点处于禁飞区范围内或超过了局部高度限制。
-                     </p>
-                   </div>
-                 </a-card>
+                <div class="dark-card">
+                  <div class="card-title">空域状态说明</div>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="info-label">当前区域</span>
+                      <span class="info-value">安徽省无为市中心城区</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">红色覆盖</span>
+                      <span class="info-value">静态禁飞区（行政、工业敏感区）</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">检测算法</span>
+                      <span class="info-value">球面几何碰撞检测 (Spherical Collision)</span>
+                    </div>
+                  </div>
+                  <div class="tip-box">
+                    <span class="tip-icon">💡</span>
+                    <span class="tip-text">小贴士：分析完成后，地图将自动根据航点位置进行染色。红色点表示该航点处于禁飞区范围内或超过了局部高度限制。</span>
+                  </div>
+                </div>
               </a-col>
             </a-row>
           </div>
@@ -290,6 +303,133 @@ onMounted(() => {
   padding: 10px;
   height: 100%;
   overflow-y: auto;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+// 暗色卡片样式
+.dark-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+// 表单暗色样式
+.dark-form {
+  :deep(.ant-form-item-label > label) {
+    color: #b8c5d6;
+  }
+  
+  :deep(.ant-select-selector) {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+  }
+  
+  :deep(.ant-select-selection-placeholder) {
+    color: rgba(255, 255, 255, 0.45);
+  }
+  
+  :deep(.ant-select-arrow) {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  :deep(.ant-checkbox-wrapper) {
+    color: #d0d7de;
+    margin-bottom: 8px;
+  }
+}
+
+// 信息网格
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border-left: 3px solid #1890ff;
+    
+    .info-label {
+      color: #8b9cb5;
+      font-size: 13px;
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+    
+    .info-value {
+      color: #e8edf3;
+      font-size: 14px;
+      margin-left: 16px;
+    }
+  }
+}
+
+// 提示框
+.tip-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.15) 0%, rgba(82, 196, 26, 0.1) 100%);
+  border: 1px solid rgba(24, 144, 255, 0.3);
+  border-radius: 8px;
+  
+  .tip-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  
+  .tip-text {
+    color: #b8d4f0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+}
+
+// 结果列表
+.result-list {
+  max-height: 250px;
+  overflow-y: auto;
+  
+  :deep(.ant-list-item) {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+    padding: 12px 0;
+  }
+}
+
+.conflict-title {
+  color: #ff6b6b;
+  font-weight: 500;
+}
+
+.conflict-desc {
+  color: #a0aec0;
+  font-size: 12px;
+}
+
+.empty-result {
+  padding: 40px 0;
+  text-align: center;
+  
+  :deep(.ant-empty-description) {
+    color: #8b9cb5;
+  }
 }
 
 .analysis-panel {
@@ -304,6 +444,65 @@ onMounted(() => {
   display: flex;
   margin-bottom: 20px;
   justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  
+  .filter-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    
+    > span {
+      color: #b8c5d6;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    :deep(.ant-select) {
+      .ant-select-selector {
+        background: rgba(0, 0, 0, 0.3) !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+        color: #e8edf3 !important;
+        border-radius: 6px;
+      }
+      
+      .ant-select-selection-placeholder {
+        color: rgba(255, 255, 255, 0.45);
+      }
+      
+      .ant-select-arrow {
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+    
+    :deep(.ant-input-search) {
+      .ant-input {
+        background: rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #e8edf3;
+        border-radius: 6px 0 0 6px;
+        
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+        
+        &:focus, &:hover {
+          border-color: #1890ff;
+        }
+      }
+      
+      .ant-input-search-button {
+        background: rgba(24, 144, 255, 0.8);
+        border-color: #1890ff;
+        
+        &:hover {
+          background: #1890ff;
+        }
+      }
+    }
+  }
 }
 
 .algorithms-grid {
@@ -348,8 +547,22 @@ onMounted(() => {
   }
 }
 
-.empty-result {
-  padding: 40px 0;
-  text-align: center;
+// Tabs 暗色样式
+:deep(.ant-tabs) {
+  .ant-tabs-tab {
+    color: #8b9cb5;
+    
+    &:hover {
+      color: #1890ff;
+    }
+    
+    &.ant-tabs-tab-active .ant-tabs-tab-btn {
+      color: #1890ff;
+    }
+  }
+  
+  .ant-tabs-ink-bar {
+    background: #1890ff;
+  }
 }
 </style>

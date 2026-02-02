@@ -421,25 +421,201 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="less">
+// 暗色主题变量
+@bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+@bg-card: rgba(255, 255, 255, 0.05);
+@border-color: rgba(255, 255, 255, 0.1);
+@text-primary: #e8edf3;
+@text-secondary: #b8c5d6;
+@text-muted: #8b9cb5;
+@accent-color: #1890ff;
+
 .auto-route-planning {
-  padding: 10px;
+  padding: 15px;
   height: 100%;
+  background: @bg-gradient;
+  
+  // Tabs 暗色样式
+  :deep(.ant-tabs) {
+    .ant-tabs-tab {
+      color: @text-muted;
+      
+      &:hover {
+        color: @accent-color;
+      }
+      
+      &.ant-tabs-tab-active .ant-tabs-tab-btn {
+        color: @accent-color;
+      }
+    }
+    
+    .ant-tabs-ink-bar {
+      background: @accent-color;
+    }
+    
+    .ant-tabs-nav::before {
+      border-color: @border-color;
+    }
+  }
+  
+  // Card 暗色样式
+  :deep(.ant-card) {
+    background: @bg-card;
+    border: 1px solid @border-color;
+    border-radius: 10px;
+    
+    .ant-card-head {
+      background: transparent;
+      border-color: @border-color;
+      
+      .ant-card-head-title {
+        color: @text-primary;
+        font-weight: 600;
+      }
+    }
+    
+    .ant-card-body {
+      color: @text-secondary;
+    }
+  }
+  
+  // 表单暗色样式
+  :deep(.ant-form) {
+    .ant-form-item-label > label {
+      color: @text-secondary;
+    }
+    
+    .ant-input {
+      background: rgba(0, 0, 0, 0.3) !important;
+      border-color: @border-color !important;
+      color: @text-primary !important;
+      
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+    }
+    
+    // InputNumber 完整样式
+    .ant-input-number {
+      background: rgba(0, 0, 0, 0.3) !important;
+      border-color: @border-color !important;
+      
+      .ant-input-number-input {
+        color: @text-primary !important;
+        background: transparent !important;
+      }
+      
+      .ant-input-number-handler-wrap {
+        background: rgba(0, 0, 0, 0.2);
+        
+        .ant-input-number-handler .anticon {
+          color: @text-muted;
+        }
+      }
+    }
+    
+    .ant-input-number-group-addon {
+      background: rgba(0, 0, 0, 0.2) !important;
+      border-color: @border-color !important;
+      color: @text-secondary !important;
+    }
+    
+    // Select 完整样式
+    .ant-select-selector {
+      background: rgba(0, 0, 0, 0.3) !important;
+      border-color: @border-color !important;
+    }
+    
+    .ant-select-selection-item {
+      color: @text-primary !important;
+    }
+    
+    .ant-select-selection-placeholder {
+      color: rgba(255, 255, 255, 0.4) !important;
+    }
+    
+    .ant-select-arrow {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  // Select 下拉菜单样式（全局）
+  :deep(.ant-select-dropdown) {
+    background: #1a1a2e;
+    
+    .ant-select-item {
+      color: @text-secondary;
+      
+      &:hover {
+        background: rgba(24, 144, 255, 0.1);
+      }
+      
+      &.ant-select-item-option-selected {
+        background: rgba(24, 144, 255, 0.2);
+        color: @text-primary;
+      }
+    }
+  }
+  
+  // Descriptions 暗色样式
+  :deep(.ant-descriptions) {
+    .ant-descriptions-item-label {
+      color: @text-muted;
+      background: transparent;
+    }
+    
+    .ant-descriptions-item-content {
+      color: @text-primary;
+      background: transparent;
+    }
+    
+    &.ant-descriptions-bordered {
+      .ant-descriptions-view {
+        border-color: @border-color;
+      }
+      
+      .ant-descriptions-item-label,
+      .ant-descriptions-item-content {
+        border-color: @border-color;
+      }
+    }
+  }
+  
+  // Result 暗色样式
+  :deep(.ant-result) {
+    .ant-result-title {
+      color: @text-primary;
+    }
+    
+    .ant-result-subtitle {
+      color: @text-muted;
+    }
+  }
 }
+
 .tab-content {
-  margin-top: 10px;
+  margin-top: 15px;
 }
+
 .form-card {
   height: calc(100% - 20px);
 }
+
 .info-card {
   height: 520px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
+
 .empty-placeholder {
   text-align: center;
-  color: #999;
+  color: @text-muted;
   padding: 40px;
+  
+  p {
+    color: @text-secondary;
+    margin-bottom: 15px;
+  }
 }
 </style>

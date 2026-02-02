@@ -237,38 +237,77 @@ const resetFilters = () => {
 </script>
 
 <style scoped lang="less">
+// 暗色主题变量
+@text-primary: #e8edf3;
+@text-secondary: #b8c5d6;
+@text-muted: #8b9cb5;
+@border-color: rgba(255, 255, 255, 0.1);
+@accent-color: #1890ff;
+
 .route-filter {
   h4, h5 {
     margin: 0 0 10px 0;
     font-size: 14px;
-    color: #333;
+    color: @text-primary;
   }
   
   h5 {
     font-size: 12px;
-    color: #666;
+    color: @text-secondary;
   }
   
   .search-section {
     margin-bottom: 15px;
+    
+    :deep(.ant-input-search) {
+      .ant-input {
+        background: rgba(0, 0, 0, 0.3);
+        border-color: @border-color;
+        color: @text-primary;
+        
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+      }
+      
+      .ant-input-search-button {
+        background: rgba(24, 144, 255, 0.8);
+        border-color: @accent-color;
+      }
+    }
   }
   
   .filter-section {
     margin-top: 5px;
     margin-bottom: 15px;
     
-    :deep(.ant-collapse-header) {
-      padding: 8px 0 !important;
-      font-size: 12px !important;
+    :deep(.ant-collapse) {
+      background: transparent;
+      border: none;
+      
+      .ant-collapse-item {
+        border-color: @border-color;
+      }
+      
+      .ant-collapse-header {
+        padding: 8px 0 !important;
+        font-size: 12px !important;
+        color: @text-secondary !important;
+      }
+      
+      .ant-collapse-content {
+        background: transparent;
+        border-color: @border-color;
+      }
+      
+      .ant-collapse-content-box {
+        padding: 8px 0 !important;
+      }
     }
     
     /* 第一个折叠面板特殊处理 */
     :deep(.ant-collapse > .ant-collapse-item:first-child .ant-collapse-header) {
       padding-top: 12px !important;
-    }
-    
-    :deep(.ant-collapse-content-box) {
-      padding: 8px 0 !important;
     }
     
     .filter-range {
@@ -277,19 +316,34 @@ const resetFilters = () => {
       gap: 8px;
       flex-wrap: wrap;
       
-      .ant-input-number {
+      :deep(.ant-input-number) {
         flex: 1;
         min-width: 60px;
+        background: rgba(0, 0, 0, 0.3);
+        border-color: @border-color;
+        
+        .ant-input-number-input {
+          color: @text-primary;
+          background: transparent;
+        }
+        
+        .ant-input-number-handler-wrap {
+          background: rgba(0, 0, 0, 0.2);
+          
+          .anticon {
+            color: @text-muted;
+          }
+        }
       }
       
       .range-separator {
         font-size: 12px;
-        color: #666;
+        color: @text-secondary;
       }
       
       .unit {
         font-size: 12px;
-        color: #666;
+        color: @text-secondary;
         white-space: nowrap;
       }
     }
@@ -299,10 +353,18 @@ const resetFilters = () => {
     margin-bottom: 15px;
     
     .filter-tags {
-      .ant-tag {
+      :deep(.ant-tag) {
         font-size: 11px;
         margin-right: 4px;
         user-select: none;
+        background: rgba(255, 255, 255, 0.08);
+        border-color: @border-color;
+        color: @text-secondary;
+        
+        &:hover {
+          border-color: @accent-color;
+          color: @accent-color;
+        }
       }
     }
   }
@@ -310,7 +372,7 @@ const resetFilters = () => {
   .filter-actions {
     padding-top: 15px;
     margin-top: 5px;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid @border-color;
   }
 }
 </style>
