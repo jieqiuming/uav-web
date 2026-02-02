@@ -1,5 +1,5 @@
 <template>
-  <mars-dialog v-model:visible="isActivate" right="10" bottom="60" width="360">
+  <div class="fixedRoute-info-wrapper">
     <div class="flight-dashboard" style="min-height: 200px">
       <!-- 进度条 -->
       <div class="progress-section">
@@ -55,12 +55,13 @@
         </div>
       </div>
     </div>
-  </mars-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, defineProps, defineEmits, onUnmounted } from "vue"
 import { useWidget } from "@mars/common/store/widget"
+import { Modal } from "ant-design-vue"
 import type { UnwrapRef } from "vue"
 import * as mapWork from "./map.js"
 import InstrumentPanel from "./components/InstrumentPanel.vue"
@@ -105,6 +106,7 @@ const props = defineProps<{
 
 let eventHandlerRoam: any
 let eventHandlerEnd: any
+let eventHandlerFlightEnd: any
 
 onMounted(() => {
   console.log("FixedRouteInfo mounted", mapWork.fixedRoute)
@@ -123,6 +125,22 @@ onMounted(() => {
      }
   }
   mapWork.eventTarget.on("endRoam", eventHandlerEnd)
+  
+  // 飞行结束事件处理
+  eventHandlerFlightEnd = (data: any) => {
+    console.log("fixedRoute-info 收到飞行结束事件", data)
+    formState.percent = 100
+    
+    // 显示完成反馈
+    Modal.success({
+      title: '飞行任务完成',
+      content: `航线 "${data.name || '飞行任务'}" 已完成飞行\n` +
+               `飞行距离: ${mapWork.formatDistance(data.distance)}\n` +
+               `飞行时间: ${mapWork.formatTime(data.duration)}`,
+      okText: '确定'
+    })
+  }
+  mapWork.eventTarget.on("flightEnd", eventHandlerFlightEnd)
 })
 
 onUnmounted(() => {
@@ -131,6 +149,9 @@ onUnmounted(() => {
   }
   if (eventHandlerEnd) {
     mapWork.eventTarget.off("endRoam", eventHandlerEnd)
+  }
+  if (eventHandlerFlightEnd) {
+    mapWork.eventTarget.off("flightEnd", eventHandlerFlightEnd)
   }
 })
 
@@ -168,6 +189,15 @@ export default {
 </script>
 
 <style scoped lang="less">
+// 仪表盘容器定位
+.fixedRoute-info-wrapper {
+  position: fixed;
+  right: 10px;
+  bottom: 60px;
+  width: 360px;
+  z-index: 1000;
+}
+
 .flight-dashboard {
   padding: 0 5px;
   background: rgba(19, 24, 35, 0.85);
