@@ -82,7 +82,7 @@
       </div>
     </div>
   </mars-dialog>
-  <fixedRoute-info />
+  <fixedRoute-info top="500"/>
 </template>
 
 <script setup lang="ts">

@@ -109,6 +109,7 @@ let eventHandlerEnd: any
 let eventHandlerFlightEnd: any
 
 onMounted(() => {
+  debugger
   console.log("FixedRouteInfo mounted", mapWork.fixedRoute)
   if (mapWork.fixedRoute?.info) {
     showInfo(mapWork.fixedRoute.info)
