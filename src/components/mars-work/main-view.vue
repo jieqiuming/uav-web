@@ -9,6 +9,9 @@
         <mars-map :url="configUrl" :options="mapOptions" @onload="marsOnload" />
       </div>
 
+      <!-- 标准模式：流程向导 -->
+      <flow-guide v-show="viewMode === 'standard' && flowGuideVisible" :visible="flowGuideVisible" @close="toggleFlowGuide(false)" />
+
       <!-- 标准模式：Widget 弹窗 -->
       <template v-if="loaded && viewMode === 'standard'">
         <template v-for="comp in widgets" :key="comp.key">
@@ -38,6 +41,7 @@ import { useWidgetStore } from "@mars/common/store/widget"
 import MarsMap from "@mars/components/mars-work/mars-map.vue"
 import MarsWidget from "./widget.vue"
 import TopBar from "@mars/components/system-menu/top-bar.vue"
+import FlowGuide from "@mars/components/system-menu/flow-guide.vue"
 import DashboardLayout from "./dashboard-layout.vue"
 import MobileQuickActions from "./mobile-quick-actions.vue" // 新增
 import { logInfo } from "@mars/utils/mars-util"
@@ -103,6 +107,18 @@ const setViewMode = (mode: string) => {
 }
 provide("viewMode", viewMode)
 provide("setViewMode", setViewMode)
+
+// 流程向导状态
+const flowGuideVisible = ref(true)
+const toggleFlowGuide = (value?: boolean) => {
+  if (typeof value === "boolean") {
+    flowGuideVisible.value = value
+    return
+  }
+  flowGuideVisible.value = !flowGuideVisible.value
+}
+provide("flowGuideVisible", flowGuideVisible)
+provide("toggleFlowGuide", toggleFlowGuide)
 </script>
 
 <style lang="less" scoped>

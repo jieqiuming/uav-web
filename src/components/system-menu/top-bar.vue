@@ -54,6 +54,12 @@
       
       <!-- 桌面端右侧菜单 -->
       <div class="menu-section right-menu desktop-menu">
+        <!-- 流程向导 -->
+        <div class="menu-item" :class="{ active: isGuideActive }" @click="handleMenuClick('flow-guide')">
+          <mars-icon icon="file-text" width="25"></mars-icon>
+          <span>流程向导</span>
+        </div>
+
         <!-- 业务管理下拉菜单 (合并项) -->
         <div class="custom-dropdown" @mouseenter="showBusinessDropdown = true" @mouseleave="showBusinessDropdown = false">
           <div class="menu-item" :class="{ active: isBusinessActive }">
@@ -98,6 +104,10 @@
             <div class="mobile-menu-item" @click="handleSubMenuClick('auto-route')">自动规划</div>
           </div>
           <div class="mobile-menu-group">
+             <div class="group-title">流程引导</div>
+             <div class="mobile-menu-item" @click="handleMenuClick('flow-guide')">流程向导</div>
+          </div>
+          <div class="mobile-menu-group">
              <div class="group-title">业务功能</div>
              <div class="mobile-menu-item" @click="handleMenuClick('airspace-application')">空域申请</div>
              <div class="mobile-menu-item" @click="handleMenuClick('airspace-calculation')">空域计算</div>
@@ -114,12 +124,15 @@
 
 <script setup lang="ts">
 import { ref, computed, inject } from "vue"
+import type { Ref } from "vue"
 import { message } from "ant-design-vue"
 import { useWidget } from "@mars/common/store/widget"
 
 // 顶部栏组件
 const { activate, disable, isActivate } = useWidget()
 const setViewMode = inject<((mode: string) => void)>("setViewMode")
+const flowGuideVisible = inject<Ref<boolean>>("flowGuideVisible")
+const toggleFlowGuide = inject<((value?: boolean) => void)>("toggleFlowGuide")
 
 // 响应式状态，跟踪菜单激活状态
 const menuStates = ref({
@@ -155,12 +168,21 @@ const isBusinessActive = computed(() => {
          isActivate("flight-report")
 })
 
+const isGuideActive = computed(() => {
+  return flowGuideVisible?.value ?? false
+})
+
 // 菜单点击处理函数
 const handleMenuClick = (menuType: string) => {
   console.log("点击菜单:", menuType)
   showMobileMenu.value = false
   
   switch (menuType) {
+    case "flow-guide":
+      if (toggleFlowGuide) {
+        toggleFlowGuide()
+      }
+      break
     case "airspace-application":
       console.log("点击空域申请")
       activate({ name: "airspace-application" })
