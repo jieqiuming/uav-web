@@ -14,20 +14,37 @@ const defaultRoutes: RouteModel[] = [
     {
         id: 1715421234567,
         name: "测试航线A",
+        waypoints: [[117.2, 31.8, 100], [117.22, 31.82, 120]],
         positions: [[117.2, 31.8, 100], [117.22, 31.82, 120]],
         distance: 3500,
         estimatedTime: 15,
+        airspaceStatus: "pending",
         createdAt: "2024-05-11T10:00:00Z"
     }
 ]
 
+const normalizeRoute = (route: RouteModel) => {
+    const waypoints = route.waypoints || route.positions || []
+    const positions = route.positions || route.waypoints || []
+    return {
+        ...route,
+        waypoints,
+        positions,
+        airspaceStatus: route.airspaceStatus || "pending"
+    }
+}
+
 const loadData = (): RouteModel[] => {
     try {
         const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) { return JSON.parse(stored) }
+        if (stored) {
+            const parsed = JSON.parse(stored).map(normalizeRoute)
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+            return parsed
+        }
     } catch (e) { console.error(e) }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultRoutes))
-    return defaultRoutes
+    return defaultRoutes.map(normalizeRoute)
 }
 
 const saveData = (data: RouteModel[]) => {
@@ -38,20 +55,24 @@ let dataList = loadData()
 
 export const getList = async () => {
     await delay(300)
+    dataList = dataList.map(normalizeRoute)
+    saveData(dataList)
     return success(dataList)
 }
 
 export const saveRoute = async (config: any) => {
     await delay(500)
     const body = JSON.parse(config.data)
-    const newRoute = {
+    const idx = dataList.findIndex(i => String(i.id) === String(body.id))
+    const existing = idx !== -1 ? dataList[idx] : null
+    const newRoute = normalizeRoute({
+        ...existing,
         ...body,
         id: body.id || Date.now(),
+        createdAt: body.createdAt || existing?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
-    }
+    })
 
-    // 如果 ID 存在则更新，否则新增
-    const idx = dataList.findIndex(i => String(i.id) === String(newRoute.id))
     if (idx !== -1) {
         dataList[idx] = newRoute
     } else {

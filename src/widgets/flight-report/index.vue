@@ -38,13 +38,14 @@
         </div>
       </div>
 
-      <div class="table-section">
+      <div class="table-section" ref="tableSectionRef">
         <a-table 
           :columns="columns" 
           :data-source="filteredReports" 
           :pagination="pagination"
           :loading="tableLoading"
           rowKey="id"
+          :rowClassName="rowClassName"
           :scroll="{ x: 1300 }"
         >
           <template #bodyCell="{ column, record }">
@@ -113,14 +114,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useWidget } from '@mars/common/store/widget'
 import { message } from 'ant-design-vue'
 import ReportViewer from './components/ReportViewer.vue'
 import type { FlightReport, FlightReportStatus } from './types'
 
 // Widget状态管理
-const { isActivate } = useWidget()
+const { isActivate, currentWidget } = useWidget()
 
 // 响应式数据
 const tableLoading = ref(false)
@@ -129,9 +130,13 @@ const filterAlgorithm = ref<string>('all')
 const searchKeyword = ref<string>('')
 const reportViewerVisible = ref(false)
 const selectedReportId = ref<string>('')
+const highlightReportId = ref<string>('')
+const tableSectionRef = ref<HTMLElement | null>(null)
 
 // 飞行报告数据
-const reports = ref<FlightReport[]>([
+const STORAGE_KEY = 'uav_flight_reports'
+
+const mockReports: FlightReport[] = [
   {
     id: 'rpt_001',
     taskName: '北区日常巡检任务',
@@ -185,7 +190,10 @@ const reports = ref<FlightReport[]>([
     createdAt: '2024-01-18 08:00:00',
     duration: '40分钟'
   }
-])
+]
+
+const reports = ref<FlightReport[]>([])
+const shouldPersist = ref(false)
 
 // 表格列配置
 const columns = [
@@ -255,6 +263,52 @@ const pagination = {
   showTotal: (total: number) => `共 ${total} 条记录`
 }
 
+const normalizeReport = (item: any): FlightReport => {
+  if (item.taskName) {
+    return item as FlightReport
+  }
+  const statusMap: Record<string, FlightReportStatus> = {
+    '已完成': 'completed',
+    completed: 'completed',
+    generating: 'generating',
+    failed: 'failed'
+  }
+  return {
+    id: item.id || `rpt_${Date.now()}`,
+    taskName: item.name || '未命名任务',
+    executionTime: item.date || item.createdAt || '',
+    flightRoute: item.flightRoute || item.routeName || '未指定航线',
+    algorithm: item.algorithm || 'general_person_vehicle_detection',
+    status: statusMap[item.status] || 'completed',
+    createdAt: item.createdAt || item.date || '',
+    fileSize: item.fileSize,
+    duration: item.duration || ''
+  }
+}
+
+const loadReports = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored).map(normalizeReport)
+      reports.value = parsed
+      shouldPersist.value = true
+      return
+    }
+  } catch (e) {
+    console.error('读取飞行报告失败', e)
+  }
+  reports.value = mockReports
+  shouldPersist.value = false
+}
+
+const persistReports = () => {
+  if (!shouldPersist.value) {
+    return
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(reports.value))
+}
+
 // 计算过滤后的报告列表
 const filteredReports = computed(() => {
   let result = reports.value
@@ -280,6 +334,34 @@ const filteredReports = computed(() => {
 
   return result
 })
+
+const rowClassName = (record: FlightReport) => {
+  return record.id === highlightReportId.value ? 'report-highlight' : ''
+}
+
+const scrollToHighlight = (reportId: string) => {
+  if (!tableSectionRef.value || !reportId) {
+    return
+  }
+  const row = tableSectionRef.value.querySelector(`[data-row-key="${reportId}"]`) as HTMLElement | null
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
+
+const focusHighlightReport = async (reportId: string) => {
+  if (!reportId) {
+    return
+  }
+  highlightReportId.value = reportId
+  filterStatus.value = 'all'
+  filterAlgorithm.value = 'all'
+  searchKeyword.value = ''
+  loadReports()
+  await nextTick()
+  setTimeout(() => scrollToHighlight(reportId), 200)
+}
+
 
 // 方法
 const getAlgorithmText = (algorithm: string) => {
@@ -418,6 +500,7 @@ const regenerateReport = (record: FlightReport) => {
     if (reportIndex !== -1) {
       reports.value[reportIndex].status = 'completed' as FlightReportStatus
       message.success(`报告重新生成完成: ${record.taskName}`)
+      persistReports()
     }
   }, 3000)
 }
@@ -427,10 +510,26 @@ const deleteReport = (record: FlightReport) => {
   if (reportIndex !== -1) {
     reports.value.splice(reportIndex, 1)
     message.success(`已删除报告: ${record.taskName}`)
+    persistReports()
   }
 }
 
+
+if (currentWidget) {
+  currentWidget.onUpdate((widget: any) => {
+    const reportId = widget?.data?.highlightReportId
+    if (reportId) {
+      focusHighlightReport(String(reportId))
+    }
+  })
+}
+
 onMounted(() => {
+  if (currentWidget?.data?.highlightReportId) {
+    focusHighlightReport(String(currentWidget.data.highlightReportId))
+  }
+
+  loadReports()
   console.log('飞行报告模块加载完成')
 })
 </script>
@@ -462,6 +561,23 @@ onMounted(() => {
   align-items: center;
   gap: 15px;
   flex-wrap: wrap;
+}
+
+:deep(.report-highlight td) {
+  background: #fff7e6 !important;
+}
+
+:deep(.report-highlight) {
+  animation: highlightFlash 2s ease;
+}
+
+@keyframes highlightFlash {
+  0% {
+    background: #fff1b8;
+  }
+  100% {
+    background: transparent;
+  }
 }
 
 .filter-section span {

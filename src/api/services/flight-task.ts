@@ -12,7 +12,8 @@ export interface FlightTask {
     workOrderNo?: string
     pilotId?: string // 关联飞手
     pilotName?: string
-    status: 'pending' | 'executing' | 'completed' | 'failed'
+    airspaceStatus?: 'pending' | 'approved' | 'rejected'
+    status: 'pending' | 'ready' | 'executing' | 'completed' | 'failed' | 'blocked'
     createdAt: string
     updatedAt: string
 }

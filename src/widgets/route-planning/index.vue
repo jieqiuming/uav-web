@@ -58,6 +58,7 @@
       <waypoint-info 
         :waypoints="waypoints" 
         :speed="routeForm.speed"
+        :active-index="activeWaypointIndex"
         @select="handleWaypointSelect"
         @edit="handleWaypointEdit"
         @remove="removeWaypoint"
@@ -152,6 +153,7 @@ const routeForm = reactive<RouteForm>({
 })
 
 const waypoints = ref<Waypoint[]>([])
+const activeWaypointIndex = ref<number>(-1)
 
 const planningState = reactive<PlanningState>({
   step: 'settings',
@@ -178,7 +180,7 @@ onMounted(() => {
   if (currentWidget) {
     currentWidget.onUpdate((data: any) => {
       if (data.editRoute) {
-        loadEditRoute(data.editRoute)
+        loadEditRoute(data.editRoute, data.focusWaypointIndex)
       }
     })
   }
@@ -252,6 +254,7 @@ const clearWaypoints = () => {
   }
   
   waypoints.value = []
+  activeWaypointIndex.value = -1
   mapWork.clearWaypoints()
 }
 
@@ -349,6 +352,9 @@ const saveRoute = async () => {
     altitude: routeForm.altitude,
     description: routeForm.description,
     waypoints: waypoints.value.map(wp => [wp.lng, wp.lat, wp.alt]),
+    positions: waypoints.value.map(wp => [wp.lng, wp.lat, wp.alt]),
+    airspaceStatus: isEditing ? (currentWidget.data.editRoute.airspaceStatus || "pending") : "pending",
+    airspaceUpdatedAt: new Date().toISOString(),
     createdAt: isEditing ? currentWidget.data.editRoute.createdAt : new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
@@ -360,10 +366,16 @@ const saveRoute = async () => {
     // 提示用户进行空域计算
     setTimeout(() => {
       message.info({
-        content: '建议对新航线进行空域安全检测，点击“空域计算”菜单即可分析',
-        duration: 5
+        content: '已进入空域计算，请完成航线安全检测',
+        duration: 4
       })
-    }, 500)
+    }, 300)
+
+    // 自动打开空域计算，并传递航线ID
+    activate({
+      name: "airspace-computation",
+      data: { routeId: routeData.id }
+    })
     
     // 重置状态
     resetPlanning()
@@ -388,6 +400,7 @@ const resetPlanning = () => {
   planningState.isSimulating = false
   planningState.simulationStatus = 'stopped'
   waypoints.value = []
+  activeWaypointIndex.value = -1
   routeForm.name = ''
   routeForm.description = ''
   routeForm.altitude = 120
@@ -404,6 +417,7 @@ const resetPlanning = () => {
 // 航点操作事件处理
 const handleWaypointSelect = (index: number) => {
   // 在地图上高亮选中的航点
+  activeWaypointIndex.value = index
   mapWork.highlightWaypoint(index)
 }
 
@@ -424,12 +438,13 @@ const validateRoute = () => {
 }
 
 // 加载编辑路线数据
-const loadEditRoute = (route: RouteData) => {
+const loadEditRoute = (route: RouteData, focusWaypointIndex?: number) => {
   // 填充表单数据
   routeForm.name = route.name
   routeForm.altitude = route.altitude
   routeForm.speed = route.speed
   routeForm.description = route.description || ''
+  activeWaypointIndex.value = -1
   
   // 转换航点数据格式
   waypoints.value = route.waypoints.map((pos, index) => ({
@@ -445,6 +460,20 @@ const loadEditRoute = (route: RouteData) => {
   
   // 在地图上显示航点
   mapWork.updateWaypointDisplay(waypoints.value)
+
+  if (focusWaypointIndex !== undefined && focusWaypointIndex !== null) {
+    const rawIndex = Number(focusWaypointIndex)
+    let normalizedIndex = -1
+    if (Number.isFinite(rawIndex)) {
+      normalizedIndex = rawIndex <= 0 ? 0 : rawIndex - 1
+    }
+    if (normalizedIndex >= 0 && normalizedIndex < waypoints.value.length) {
+      setTimeout(() => {
+        activeWaypointIndex.value = normalizedIndex
+        mapWork.highlightWaypoint(normalizedIndex)
+      }, 300)
+    }
+  }
   
   message.success(`已加载航线: ${route.name}，可进行编辑`)
 }

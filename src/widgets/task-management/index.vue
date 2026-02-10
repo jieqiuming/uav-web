@@ -21,9 +21,24 @@
               size="small"
               @click="showAssignRouteModal(record)"
             >分配航线</a-button>
-            <a-button type="link" size="small" @click="executeTask(record)">执行</a-button>
+            <a-button
+              type="primary"
+              size="small"
+              :disabled="!canExecute(record)"
+              @click="executeTask(record)"
+            >??</a-button>
             <a-button type="link" size="small" danger @click="deleteTask(record.id)">删除</a-button>
           </a-space>
+        </template>
+        <template #airspaceStatus="{ record }">
+          <a-tag :color="getAirspaceColor(record.airspaceStatus)">
+            {{ getAirspaceText(record.airspaceStatus) }}
+          </a-tag>
+        </template>
+        <template #taskStatus="{ record }">
+          <a-tag :color="getTaskStatusColor(record)">
+            {{ getTaskStatusText(record) }}
+          </a-tag>
         </template>
       </mars-table>
 
@@ -134,9 +149,10 @@ const columns = [
   { title: "任务名称", dataIndex: "name", key: "name" },
   { title: "机型", dataIndex: "aircraftName", key: "aircraftName" },
   { title: "航线", dataIndex: "routeName", key: "routeName" },
+  { title: "空域审批", key: "airspaceStatus", slots: { customRender: "airspaceStatus" }, width: 90 },
+  { title: "????", key: "taskStatus", slots: { customRender: "taskStatus" }, width: 90 },
   { title: "创建时间", dataIndex: "createdAt", key: "createdAt" },
-  { title: "操作", key: "action", slots: { customRender: "action" }, width: 150 }
-]
+  { title: "操作", key: "action", slots: { customRender: "action" }, width: 150 }]
 
 // 加载数据 (机型、航线、任务)
 const loadData = async () => {
@@ -207,7 +223,7 @@ const handleCreate = async () => {
 
   try {
     await flightTaskApi.createFlightTask(newTask)
-    message.success("任务创建成功")
+    message.success("任务创建成功，已自动创建空域申请")
     isModalVisible.value = false
     loadTasks()
   } catch (e) {
@@ -215,7 +231,24 @@ const handleCreate = async () => {
   }
 }
 
-const executeTask = (record: any) => {
+const executeTask = async (record: any) => {
+  if (!canExecute(record)) {
+    if (!isRouteApproved(record.routeId)) {
+      message.warning("该任务航线尚未通过空域计算，请先完成空域计算")
+    } else if (!isTaskAirspaceApproved(record.airspaceStatus)) {
+      message.warning("该任务空域申请未通过，请先完成审批")
+    } else {
+      message.warning("任务暂不可执行")
+    }
+    return
+  }
+
+  try {
+    await flightTaskApi.updateFlightTaskStatus(record.id, 'executing')
+    record.status = 'executing'
+  } catch (e) {
+    console.error('????????', e)
+  }
   message.loading("正在启动飞行任务...", 1)
   
   // 获取完整的航线数据
@@ -239,9 +272,94 @@ const executeTask = (record: any) => {
       action: "start_task",
       route,
       taskId: record.id,
-      pilotId: record.pilotId // 传递飞手ID，用于任务完成后恢复状态
+      pilotId: record.pilotId, // 传递飞手ID，用于任务完成后恢复状态
+      taskName: record.name,
+      routeName: record.routeName
     }
   })
+}
+
+const isTaskAirspaceApproved = (status?: string) => status === "approved"
+
+const isRouteApproved = (routeId?: string) => {
+  if (!routeId) {
+    return false
+  }
+  const route = routeOptions.value.find((r) => String(r.value) === String(routeId))?.origin
+  return route?.airspaceStatus === "approved"
+}
+
+const isTaskExecutableStatus = (status?: string) => {
+  return !['executing', 'completed', 'failed', 'blocked'].includes(status || '')
+}
+
+const canExecute = (record: any) => {
+  return isTaskExecutableStatus(record.status) && isRouteApproved(record.routeId) && isTaskAirspaceApproved(record.airspaceStatus)
+}
+
+const getAirspaceText = (status?: string) => {
+  switch (status) {
+    case "approved":
+      return "已通过"
+    case "rejected":
+      return "已驳回"
+    default:
+      return "待审批"
+  }
+}
+
+const getAirspaceColor = (status?: string) => {
+  switch (status) {
+    case "approved":
+      return "green"
+    case "rejected":
+      return "red"
+    default:
+      return "gold"
+  }
+}
+
+
+const getTaskStatusText = (record: any) => {
+  if (canExecute(record)) {
+    return '???'
+  }
+  const status = record.status || 'pending'
+  switch (status) {
+    case 'executing':
+      return '???'
+    case 'completed':
+      return '???'
+    case 'failed':
+      return '????'
+    case 'blocked':
+      return '????'
+    case 'ready':
+      return '???'
+    default:
+      return '???'
+  }
+}
+
+const getTaskStatusColor = (record: any) => {
+  if (canExecute(record)) {
+    return 'green'
+  }
+  const status = record.status || 'pending'
+  switch (status) {
+    case 'executing':
+      return 'processing'
+    case 'completed':
+      return 'blue'
+    case 'failed':
+      return 'red'
+    case 'blocked':
+      return 'volcano'
+    case 'ready':
+      return 'gold'
+    default:
+      return 'default'
+  }
 }
 
 const deleteTask = async (id: string) => {

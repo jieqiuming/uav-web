@@ -47,12 +47,13 @@ export function showRoutePreview(routeData) {
   // 清除之前的显示
   clearRouteDisplay()
 
-  if (!routeData || !routeData.waypoints || routeData.waypoints.length < 2) {
+  const waypointList = routeData?.waypoints || routeData?.positions || []
+  if (!routeData || waypointList.length < 2) {
     console.warn("无效的航线数据")
     return
   }
 
-  const positions = routeData.waypoints
+  const positions = waypointList
 
   // 添加航点标记
   positions.forEach((pos, index) => {
@@ -182,12 +183,13 @@ export function startRouteSimulation(routeData) {
   // 停止之前的仿真
   stopSimulation()
 
-  if (!routeData || !routeData.waypoints || routeData.waypoints.length < 2) {
+  const waypointList = routeData?.waypoints || routeData?.positions || []
+  if (!routeData || waypointList.length < 2) {
     console.warn("无效的航线数据，无法开始仿真")
     return
   }
 
-  const positions = routeData.waypoints
+  const positions = waypointList
 
   // 创建仿真飞行路线
   currentSimulation = new mars3d.graphic.FixedRoute({
@@ -362,10 +364,11 @@ export async function updateRoute(routeData) {
 // 航线统计信息
 export async function getRouteStatistics() {
   const routes = await getSavedRoutes()
+  const getWaypoints = (route) => route.waypoints || route.positions || []
   return {
     totalRoutes: routes.length,
-    totalWaypoints: routes.reduce((sum, route) => sum + route.waypoints.length, 0),
-    averageWaypoints: routes.length > 0 ? Math.round(routes.reduce((sum, route) => sum + route.waypoints.length, 0) / routes.length) : 0,
+    totalWaypoints: routes.reduce((sum, route) => sum + getWaypoints(route).length, 0),
+    averageWaypoints: routes.length > 0 ? Math.round(routes.reduce((sum, route) => sum + getWaypoints(route).length, 0) / routes.length) : 0,
     altitudeRange:
       routes.length > 0
         ? {

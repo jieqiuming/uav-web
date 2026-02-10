@@ -64,13 +64,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import type { Waypoint } from "../types"
 
 // Props
 const props = defineProps<{
   waypoints: Waypoint[]
   speed: number // m/s
+  activeIndex?: number
 }>()
 
 // Emits
@@ -82,6 +83,16 @@ const emit = defineEmits<{
 
 // 响应式数据
 const activeIndex = ref<number>(-1)
+
+watch(
+  () => props.activeIndex,
+  (value) => {
+    if (value === undefined || value === null) {
+      return
+    }
+    activeIndex.value = value
+  }
+)
 
 // 计算属性
 const routeDistance = computed(() => {

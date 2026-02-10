@@ -44,9 +44,14 @@
         <div v-else class="route-items">
           <div v-for="route in filteredRoutes" :key="route.id" class="route-item" :class="{ active: selectedRoute?.id === route.id }">
             <div class="route-header" @click="selectRoute(route)">
-              <div class="route-name">{{ route.name }}</div>
+              <div class="route-name">
+                {{ route.name }}
+                <a-tag class="status-tag" :color="getStatusColor(route.airspaceStatus)">
+                  {{ getStatusText(route.airspaceStatus) }}
+                </a-tag>
+              </div>
               <div class="route-meta">
-                <span class="waypoint-count">{{ route.waypoints.length }}个航点</span>
+                <span class="waypoint-count">{{ (route.waypoints?.length || route.positions?.length || 0) }}个航点</span>
                 <span class="route-date">{{ formatDate(route.createdAt) }}</span>
               </div>
             </div>
@@ -226,10 +231,15 @@ const applyCurrentFilters = () => {
 
   // 航点数筛选
   if (currentFilters.value.minWaypoints !== null) {
-    filtered = filtered.filter((route) => route.waypoints.length >= currentFilters.value.minWaypoints)
+    filtered = filtered.filter((route) => (route.waypoints?.length || route.positions?.length || 0) >= currentFilters.value.minWaypoints)
   }
   if (currentFilters.value.maxWaypoints !== null) {
-    filtered = filtered.filter((route) => route.waypoints.length <= currentFilters.value.maxWaypoints)
+    filtered = filtered.filter((route) => (route.waypoints?.length || route.positions?.length || 0) <= currentFilters.value.maxWaypoints)
+  }
+
+  // 空域状态筛选
+  if (currentFilters.value.status) {
+    filtered = filtered.filter((route) => (route.airspaceStatus || "pending") === currentFilters.value.status)
   }
 
   // 快速筛选
@@ -251,6 +261,28 @@ const applyCurrentFilters = () => {
 
 const showStatisticsDetails = () => {
   message.info("详细统计功能开发中...")
+}
+
+const getStatusText = (status?: string) => {
+  switch (status) {
+    case "approved":
+      return "已通过"
+    case "conflict":
+      return "有冲突"
+    default:
+      return "待计算"
+  }
+}
+
+const getStatusColor = (status?: string) => {
+  switch (status) {
+    case "approved":
+      return "green"
+    case "conflict":
+      return "red"
+    default:
+      return "gold"
+  }
 }
 
 // 航线操作
@@ -521,6 +553,15 @@ const exportAllRoutes = () => {
             font-weight: 600;
             color: #e8edf3;
             margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .status-tag {
+              margin: 0;
+              font-size: 11px;
+              line-height: 1;
+            }
           }
 
           .route-meta {

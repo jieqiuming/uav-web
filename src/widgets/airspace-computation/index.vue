@@ -52,7 +52,7 @@
                     <div class="result-list">
                       <a-list item-layout="horizontal" :data-source="analysisResult" v-if="analysisResult.length > 0">
                         <template #renderItem="{ item }">
-                          <a-list-item>
+                          <a-list-item class="conflict-item" @click="focusConflict(item)">
                             <a-list-item-meta>
                               <template #title>
                                 <span class="conflict-title">
@@ -61,12 +61,24 @@
                                 </span>
                               </template>
                               <template #description>
-                                <span class="conflict-desc">{{ item.description }}</span>
+                                <div class="conflict-desc">
+                                  <span>{{ item.description }}</span>
+                                  <a-button type="link" size="small" @click.stop="editConflict(item)">编辑并定位</a-button>
+                                </div>
                               </template>
                             </a-list-item-meta>
                           </a-list-item>
                         </template>
                       </a-list>
+                    </div>
+
+                    <div class="result-actions" v-if="analysisResult.length > 0">
+                      <a-button type="primary" @click="editCurrentRoute">
+                        去编辑航线
+                      </a-button>
+                      <a-button @click="runAnalysis">
+                        重新检测
+                      </a-button>
                     </div>
                   </div>
                 </div>
@@ -162,16 +174,18 @@ import useLifecycle from "@mars/common/uses/use-lifecycle"
 import { message } from "ant-design-vue"
 import * as mapWork from "./map"
 import type { AlgorithmInfo } from "./types"
+import * as routeApi from "@/api/services/route"
 
 // 启用 map.js 生命周期
 useLifecycle(mapWork)
 
-const { isActivate, activate } = useWidget()
+const { isActivate, activate, disable, currentWidget } = useWidget()
 
 // 状态
 const activeTab = ref("analysis")
 const routeOptions = ref<any[]>([])
 const selectedRouteId = ref<string | undefined>(undefined)
+const pendingRouteId = ref<string | undefined>(undefined)
 const analysisItems = ref(["zone", "height"])
 const analyzing = ref(false)
 const analysisResult = ref<any[] | null>(null)
@@ -231,16 +245,35 @@ const algorithms = ref<AlgorithmInfo[]>([
   }
 ])
 
-const loadRoutes = () => {
+const normalizeRoute = (route: any) => {
+  const waypoints = route.waypoints || route.positions || []
+  const positions = route.positions || route.waypoints || []
+  return { ...route, waypoints, positions, airspaceStatus: route.airspaceStatus || "pending" }
+}
+
+const applyPendingSelection = () => {
+  if (!pendingRouteId.value || routeOptions.value.length === 0) {
+    return
+  }
+  const match = routeOptions.value.find((route: any) => String(route.id) === String(pendingRouteId.value))
+  if (match) {
+    selectedRouteId.value = match.id
+  }
+  pendingRouteId.value = undefined
+}
+
+const loadRoutes = async () => {
   try {
-    const routes = JSON.parse(localStorage.getItem("uav_routes") || "[]")
-    routeOptions.value = routes.length > 0 ? routes : mockRoutes
-    if (routeOptions.value.length > 0) {
-      selectedRouteId.value = routeOptions.value[0].id
-    }
+    const routes = await routeApi.getRoutes()
+    const normalized = (routes || []).map(normalizeRoute)
+    routeOptions.value = normalized.length > 0 ? normalized : mockRoutes
   } catch (e) {
     routeOptions.value = mockRoutes
   }
+  if (routeOptions.value.length > 0 && !selectedRouteId.value) {
+    selectedRouteId.value = routeOptions.value[0].id
+  }
+  applyPendingSelection()
 }
 
 const runAnalysis = () => {
@@ -249,24 +282,77 @@ const runAnalysis = () => {
     return
   }
 
-  const route = routeOptions.value.find(r => r.id === selectedRouteId.value)
+  const route = routeOptions.value.find(r => String(r.id) === String(selectedRouteId.value))
   if (!route) {
     return
   }
 
   analyzing.value = true
   
-  setTimeout(() => {
+  setTimeout(async () => {
     const conflicts = mapWork.analyzeRouteConflict(route)
     analysisResult.value = conflicts
     analyzing.value = false
     
+    const status = conflicts.length > 0 ? "conflict" : "approved"
+    route.airspaceStatus = status
+    route.airspaceUpdatedAt = new Date().toISOString()
+    try {
+      await routeApi.saveRoute(route)
+    } catch (e) {
+      console.error("更新航线空域状态失败", e)
+    }
+
     if (conflicts.length > 0) {
       message.error(`分析完成：检测到 ${conflicts.length} 处空间冲突！`)
     } else {
       message.success("分析完成：航线符合安全要求")
     }
   }, 1000)
+}
+
+const focusConflict = (item: any) => {
+  if (!selectedRouteId.value) {
+    return
+  }
+  const route = routeOptions.value.find((r: any) => String(r.id) === String(selectedRouteId.value))
+  if (!route) {
+    return
+  }
+  mapWork.highlightWaypoint(route, item.waypointIndex)
+}
+
+const editConflict = (item: any) => {
+  if (!selectedRouteId.value) {
+    return
+  }
+  const route = routeOptions.value.find((r: any) => String(r.id) === String(selectedRouteId.value))
+  if (!route) {
+    message.warning("未找到航线数据")
+    return
+  }
+  disable("airspace-computation")
+  activate({
+    name: "route-planning",
+    data: { editRoute: route, focusWaypointIndex: item.waypointIndex }
+  })
+}
+
+const editCurrentRoute = () => {
+  if (!selectedRouteId.value) {
+    message.warning("请先选择要编辑的航线")
+    return
+  }
+  const route = routeOptions.value.find((r: any) => String(r.id) === String(selectedRouteId.value))
+  if (!route) {
+    message.warning("未找到航线数据")
+    return
+  }
+  disable("airspace-computation")
+  activate({
+    name: "route-planning",
+    data: { editRoute: route }
+  })
 }
 
 const filteredAlgorithms = computed(() => {
@@ -296,6 +382,15 @@ const selectAlgorithm = (algo: any) => {
 onMounted(() => {
   loadRoutes()
 })
+
+if (currentWidget) {
+  currentWidget.onUpdate((widget: any) => {
+    if (widget?.data?.routeId) {
+      pendingRouteId.value = String(widget.data.routeId)
+      loadRoutes()
+    }
+  })
+}
 </script>
 
 <style scoped lang="less">
@@ -413,6 +508,12 @@ onMounted(() => {
   }
 }
 
+.result-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
 .conflict-title {
   color: #ff6b6b;
   font-weight: 500;
@@ -421,6 +522,25 @@ onMounted(() => {
 .conflict-desc {
   color: #a0aec0;
   font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  :deep(.ant-btn-link) {
+    padding: 0;
+    height: auto;
+  }
+}
+
+.conflict-item {
+  cursor: pointer;
+  padding-left: 4px;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(255, 77, 79, 0.08);
+  }
 }
 
 .empty-result {

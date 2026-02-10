@@ -143,10 +143,14 @@ const filters = reactive({
   minSpeed: null,
   maxSpeed: null,
   minWaypoints: null,
-  maxWaypoints: null
+  maxWaypoints: null,
+  status: null
 })
 
 const quickFilterTags = ref([
+  { key: 'status_pending', label: '待计算', active: false },
+  { key: 'status_approved', label: '已通过', active: false },
+  { key: 'status_conflict', label: '有冲突', active: false },
   { key: 'low_altitude', label: '低空飞行 (<200m)', active: false },
   { key: 'high_speed', label: '高速飞行 (>20m/s)', active: false },
   { key: 'long_route', label: '长航线 (>10点)', active: false },
@@ -194,9 +198,22 @@ const toggleQuickFilter = (tag: any) => {
 
 const applyQuickFilters = () => {
   // 根据快速筛选标签设置筛选条件
+  const hasStatusTag = quickFilterTags.value.some(tag => tag.active && tag.key.startsWith('status_'))
+  if (!hasStatusTag) {
+    filters.status = null
+  }
   quickFilterTags.value.forEach(tag => {
     if (tag.active) {
       switch (tag.key) {
+        case 'status_pending':
+          filters.status = 'pending'
+          break
+        case 'status_approved':
+          filters.status = 'approved'
+          break
+        case 'status_conflict':
+          filters.status = 'conflict'
+          break
         case 'low_altitude':
           filters.maxAltitude = 200
           break

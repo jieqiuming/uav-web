@@ -3,6 +3,7 @@ import * as mars3d from "mars3d"
 let map // 地图对象
 let graphicLayer // 矢量图层对象
 let restrictedZones = [] // 禁飞区数据
+let highlightGraphic = null
 
 /**
  * 初始化地图业务，生命周期钩子函数（必须）
@@ -28,6 +29,7 @@ export function onUnmounted() {
     map.removeLayer(graphicLayer)
     graphicLayer = null
     map = null
+    highlightGraphic = null
 }
 
 // 初始化模拟禁飞区
@@ -166,7 +168,57 @@ export function analyzeRouteConflict(routeData) {
     return conflicts
 }
 
+// 高亮冲突航点
+export function highlightWaypoint(routeData, waypointIndex) {
+    if (!map || !graphicLayer || !routeData) {
+        return
+    }
+    const positions = routeData.waypoints?.length ? routeData.waypoints : routeData.positions || []
+    if (!positions.length) {
+        return
+    }
+    const index = Math.max(0, Number(waypointIndex) - 1)
+    const point = positions[index]
+    if (!point) {
+        return
+    }
+
+    if (highlightGraphic) {
+        graphicLayer.removeGraphic(highlightGraphic)
+        highlightGraphic = null
+    }
+
+    highlightGraphic = new mars3d.graphic.PointEntity({
+        position: [point[0], point[1], point[2] || 0],
+        style: {
+            color: "#ff4d4f",
+            pixelSize: 12,
+            outline: true,
+            outlineColor: "#ffffff",
+            outlineWidth: 2,
+            label: {
+                text: `冲突航点 ${waypointIndex}`,
+                font_size: 16,
+                color: "#ffffff",
+                background: true,
+                backgroundColor: "rgba(255,77,79,0.8)",
+                pixelOffsetY: -18,
+                distanceDisplayCondition: true,
+                distanceDisplayCondition_far: 10000,
+                distanceDisplayCondition_near: 0
+            }
+        }
+    })
+
+    graphicLayer.addGraphic(highlightGraphic)
+    map.flyToPoint([point[0], point[1], point[2] || 0], {
+        radius: 500,
+        duration: 1.2
+    })
+}
+
 // 导出方法供 Vue 调用
 export const mapWork = {
-    analyzeRouteConflict
+    analyzeRouteConflict,
+    highlightWaypoint
 }

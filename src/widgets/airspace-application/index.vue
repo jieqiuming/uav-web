@@ -119,6 +119,7 @@ const filterStatus = ref('all')
 // 定义接口
 interface Task {
   id: string
+  taskId?: string
   name: string
   startTime: string
   routeName: string
@@ -131,6 +132,8 @@ interface Task {
 
 // 本地存储Key
 const STORAGE_KEY = 'uav_airspace_tasks'
+const FLIGHT_TASK_KEY = 'uav_flight_tasks_v2'
+const ROUTE_KEY = 'uav_routes'
 
 // 表格数据
 const allTasks = ref<Task[]>([])
@@ -191,6 +194,53 @@ const handleViewRoute = () => {
 // 保存数据
 const saveTasks = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(allTasks.value))
+}
+
+const isRouteApproved = (routeId?: string) => {
+  if (!routeId) {
+    return false
+  }
+  try {
+    const storedRoutes = localStorage.getItem(ROUTE_KEY)
+    if (!storedRoutes) {
+      return false
+    }
+    const routes = JSON.parse(storedRoutes)
+    const route = routes.find((r: any) => String(r.id) === String(routeId))
+    return route?.airspaceStatus === 'approved'
+  } catch (e) {
+    console.error('读取航线数据失败', e)
+    return false
+  }
+}
+
+const updateFlightTaskAirspaceStatus = (taskId: string, status: 'approved' | 'rejected' | 'pending') => {
+  try {
+    const stored = localStorage.getItem(FLIGHT_TASK_KEY)
+    if (!stored) {
+      return
+    }
+    const tasks = JSON.parse(stored)
+    const idx = tasks.findIndex((t: any) => String(t.id) === String(taskId))
+    if (idx === -1) {
+      return
+    }
+    tasks[idx].airspaceStatus = status
+    const isExecutable = status === 'approved' && isRouteApproved(tasks[idx].routeId)
+    if (!['executing', 'completed'].includes(tasks[idx].status)) {
+      if (status === 'rejected') {
+        tasks[idx].status = 'blocked'
+      } else if (isExecutable) {
+        tasks[idx].status = 'ready'
+      } else {
+        tasks[idx].status = 'pending'
+      }
+    }
+    tasks[idx].updatedAt = dayjs().format('YYYY-MM-DD HH:mm:ss')
+    localStorage.setItem(FLIGHT_TASK_KEY, JSON.stringify(tasks))
+  } catch (e) {
+    console.error('更新任务空域状态失败', e)
+  }
 }
 
 // 表格列配置
@@ -365,13 +415,19 @@ const deleteTask = (record: Task) => {
 const approveTask = (record: Task) => {
   record.status = 'approved'
   saveTasks()
-  message.success('任务已审核通过')
+  if (record.taskId) {
+    updateFlightTaskAirspaceStatus(record.taskId, 'approved')
+  }
+  message.success('任务已审核通过，如航线已完成空域计算，任务将变为可执行')
 }
 
 // 模拟驳回（仅用于演示）
 const rejectTask = (record: Task) => {
   record.status = 'rejected'
   saveTasks()
+  if (record.taskId) {
+    updateFlightTaskAirspaceStatus(record.taskId, 'rejected')
+  }
   message.warning('任务已驳回')
 }
 

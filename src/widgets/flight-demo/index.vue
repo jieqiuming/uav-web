@@ -105,6 +105,8 @@ const { isActivate, activate, disable, currentWidget } = useWidget()
 
 const currentTaskId = ref<string>("")
 const currentPilotId = ref<string>("") // 飞手 ID，用于任务完成后恢复状态
+const currentTaskName = ref<string>("")
+const currentRouteName = ref<string>("")
 
 // 关闭飞行演示
 const closeFlightDemo = () => {
@@ -129,6 +131,12 @@ currentWidget.onUpdate((widget: any) => {
     if (widget.data.pilotId) {
       currentPilotId.value = widget.data.pilotId
     }
+    if (widget.data.taskName) {
+      currentTaskName.value = widget.data.taskName
+    }
+    if (widget.data.routeName) {
+      currentRouteName.value = widget.data.routeName
+    }
     if (widget.data.route) {
        console.log('接收到飞行任务数据:', widget.data)
        // 延迟一点为了确保地图加载完成
@@ -147,11 +155,19 @@ onMounted(() => {
   // 监听地图事件
   mapWork.eventTarget.on("flightEnd", (data: any) => {
     console.log("捕获到飞行结束事件，准备生成报告:", data)
-    saveFlightReport(data)
+    const reportId = saveFlightReport(data)
     
     // 如果关联了任务ID，更新任务状态
     if (currentTaskId.value) {
       updateTaskStatus(currentTaskId.value)
+    }
+
+    if (reportId) {
+      activate({
+        name: "flight-report",
+        data: { highlightReportId: reportId }
+      })
+      disable("flight-demo")
     }
     
     // 重置飞行状态
@@ -193,22 +209,33 @@ const updateTaskStatus = async (taskId: string) => {
 const saveFlightReport = (data: any) => {
   try {
     const reports = JSON.parse(localStorage.getItem("uav_flight_reports") || "[]")
+    const now = new Date().toLocaleString()
     const newReport = {
-      id: "REP-" + Date.now(),
-      name: data.name || "自主巡检任务",
-      taskId: currentTaskId.value, // Record Task ID
-      date: new Date().toLocaleString(),
+      id: "rpt_" + Date.now(),
+      taskId: currentTaskId.value,
+      taskName: currentTaskName.value || data.name || "自主巡检任务",
+      executionTime: now,
+      flightRoute: currentRouteName.value || data.routeName || "未指定航线",
+      algorithm: "general_person_vehicle_detection",
+      status: "completed",
+      createdAt: now,
+      fileSize: null,
       duration: Math.round(data.duration) + "s",
       distance: (data.distance / 1000).toFixed(2) + "km",
-      status: "已完成",
+      // 兼容旧字段
+      name: currentTaskName.value || data.name || "自主巡检任务",
+      date: now,
       type: "自动生成"
     }
     reports.unshift(newReport)
     localStorage.setItem("uav_flight_reports", JSON.stringify(reports.slice(0, 20))) 
     message.success("飞行报告已生成")
+    return newReport.id
   } catch (e) {
     console.error("保存报告失败", e)
+    return null
   }
+  return null
 }
 
 interface FormState {

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-show="visible" class="flow-guide">
     <div class="flow-header">
       <div class="header-left">
